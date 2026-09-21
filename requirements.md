@@ -8,6 +8,7 @@ I am building Buzzword Techtionary to help people quickly understand computer sc
 
 ### Functional Requirements
 
+- **Initial dictionary content:** Populate the dictionary with an initial collection of computer science terms and concise definitions so users can search existing entries when the application launches, without waiting for AI generation.
 - **Search:** Provide a centered search bar on the homepage. Search stored terms and aliases without case sensitivity, suggest matching terms as users type, and show results when they submit a query.
 - **Term pages:** Open a term page when a user selects a result or suggestion. Display its definition, aliases, related terms, available reference links, and bookmark control.
 - **Related terms:** Let users navigate directly to related entries.
@@ -30,7 +31,7 @@ I am building Buzzword Techtionary to help people quickly understand computer sc
 ### Data Input
 
 - **User input:** Users manually enter search text and select bookmark controls. The React frontend sends search requests to the Node.js and Express backend.
-- **Initial content:** I will prepare a reviewed JSON dataset of terms and import it into MongoDB to populate the initial dictionary.
+- **Initial content:** I will generate or compile an initial JSON dataset of computer science terms and definitions, review it for accuracy and clarity, and import it into MongoDB before launch. The import will validate required fields and prevent duplicate terms.
 - **Generated content:** The backend will fetch definitions for valid missing terms from the OpenAI API, validate their structure and relevance, and store successful responses. Structural validation alone does not establish factual accuracy.
 
 ### Database and Storage
@@ -38,4 +39,4 @@ I am building Buzzword Techtionary to help people quickly understand computer sc
 - **MongoDB:** Store a document for each term containing its name, normalized search key, aliases, definition, related term references, optional reference links, content origin, and creation and update timestamps. A unique normalized key will prevent duplicate terms. MongoDB's flexible document structure fits entries with varying aliases and references.
 - **Browser localStorage:** Store bookmarked term IDs locally. Bookmarks will persist in that browser but will not sync across devices and may be lost if browser data is cleared.
 
-The initial dataset import and browser-based bookmarks are proposed implementation choices for this specification.
+JSON import and browser-based bookmarks are implementation choices; providing an initial dictionary is a functional requirement.
