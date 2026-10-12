@@ -1,0 +1,12 @@
+[
+  { "name": "Application Programming Interface", "aliases": ["API"], "definition": "A defined way for software components to request data or functionality from one another." },
+  { "name": "Artificial Intelligence", "aliases": ["AI"], "definition": "Computing methods for tasks such as learning, reasoning, and recognizing patterns." },
+  { "name": "Continuous Integration", "aliases": ["CI"], "definition": "A practice of frequently combining code changes and checking them with automated builds and tests." },
+  { "name": "Database", "aliases": ["DB"], "definition": "An organized collection of data that can be stored, retrieved, and updated." },
+  { "name": "Domain Name System", "aliases": ["DNS"], "definition": "A distributed naming system that maps domain names to records such as IP addresses." },
+  { "name": "Hypertext Transfer Protocol", "aliases": ["HTTP"], "definition": "An application protocol for exchanging requests and responses between clients and servers." },
+  { "name": "JavaScript", "aliases": ["JS", "ECMAScript"], "definition": "A programming language commonly used for interactive web pages and server applications." },
+  { "name": "Machine Learning", "aliases": ["ML"], "definition": "Methods that learn patterns from data to make predictions or decisions." },
+  { "name": "Structured Query Language", "aliases": ["SQL"], "definition": "A language for defining, querying, and modifying data in relational databases." },
+  { "name": "Version Control", "aliases": ["Source Control", "VCS"], "definition": "A system for tracking changes to files and coordinating work across revisions." }
+]
