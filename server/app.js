@@ -18,5 +18,15 @@ export function createApp(repository) {
     }
   });
 
+  app.get('/api/terms/:id', async (req, res) => {
+    try {
+      const term = await repository.findById(req.params.id);
+      if (!term) return res.status(404).json({ error: 'Term not found.' });
+      res.json({ term });
+    } catch {
+      res.status(503).json({ error: 'Definition is temporarily unavailable. Please try again.' });
+    }
+  });
+
   return app;
 }

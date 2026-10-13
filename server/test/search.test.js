@@ -1,18 +1,20 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { readFile } from 'node:fs/promises';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoClient } from 'mongodb';
 import { createApp } from '../app.js';
-import { createTermRepository, importTerms, prepareTerm } from '../terms.js';
+import { createTermRepository, initializeTerms } from '../terms.js';
 
 let mongo, client, collection, server, base;
 before(async () => {
   mongo = await MongoMemoryServer.create();
   client = await new MongoClient(mongo.getUri()).connect();
   collection = client.db('test').collection('terms');
-  const entries = JSON.parse(await readFile(new URL('../data/terms.json', import.meta.url), 'utf8'));
-  await importTerms(collection, entries);
+  await initializeTerms(collection);
+  await collection.insertMany([
+    { name: 'Application Programming Interface', aliases: ['API'], definition: 'A software interface.', searchKey: 'application programming interface', searchPrefixes: ['a', 'ap', 'api', 'application programming'] },
+    { name: 'Artificial Intelligence', aliases: ['AI'], definition: 'Learning and reasoning.', searchKey: 'artificial intelligence', searchPrefixes: ['a', 'ai', 'artificial'] },
+  ]);
   server = createApp(createTermRepository(collection)).listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
   base = `http://127.0.0.1:${server.address().port}`;
@@ -57,21 +59,12 @@ test('rejects blank, oversized, control-character and non-string queries', async
   }
 });
 
-test('import is idempotent and enforces unique normalized names', async () => {
-  const count = await collection.countDocuments();
-  await importTerms(collection, [{ name: ' DATABASE ', aliases: [], definition: 'Duplicate' }]);
-  assert.equal(await collection.countDocuments(), count);
-  assert.notEqual((await search('database')).terms[0].definition, 'Duplicate');
-  await assert.rejects(collection.insertOne(prepareTerm({ name: 'Database', definition: 'Duplicate' })), { code: 11000 });
-});
-
-test('rejects invalid seed entries before writing', async () => {
-  await assert.rejects(importTerms(collection, [{ name: 'Valid', definition: 'Definition' }, { name: 'Bad', aliases: [null] }]));
-  assert.equal(await collection.countDocuments({ searchKey: 'valid' }), 0);
+test('enforces unique normalized names', async () => {
+  await assert.rejects(collection.insertOne({ searchKey: 'application programming interface' }), { code: 11000 });
 });
 
 test('limits suggestions and results and signals additional matches', async () => {
-  await importTerms(collection, Array.from({ length: 55 }, (_, i) => ({ name: `Test ${String(i).padStart(2, '0')}`, aliases: ['Testing'], definition: 'Test entry' })));
+  await collection.insertMany(Array.from({ length: 55 }, (_, i) => ({ name: `Test ${i}`, aliases: [], definition: 'Test entry', searchKey: `test ${i}`, searchPrefixes: ['test'] })));
   const suggestions = await search('test', '&suggest=true');
   assert.equal(suggestions.terms.length, 8);
   assert.equal(suggestions.hasMore, true);
@@ -89,5 +82,17 @@ test('returns a retryable service error without exposing internal details', asyn
     assert.deepEqual(await response.json(), { error: 'Search is temporarily unavailable. Please try again.' });
   } finally {
     await new Promise((resolve) => failingServer.close(resolve));
+  }
+});
+
+test('loads one definition by ID and rejects unknown or invalid IDs', async () => {
+  const { terms } = await search('api');
+  const response = await fetch(`${base}/api/terms/${terms[0]._id}`);
+  assert.equal(response.status, 200);
+  const { term } = await response.json();
+  assert.equal(term.name, 'Application Programming Interface');
+  assert.ok(term.definition);
+  for (const id of ['invalid', '000000000000000000000000']) {
+    assert.equal((await fetch(`${base}/api/terms/${id}`)).status, 404);
   }
 });
