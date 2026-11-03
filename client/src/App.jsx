@@ -300,7 +300,7 @@ function TermMap() {
   const [query, setQuery] = useState('');
   const [hovered, setActive] = useState(null);
   const [lines, setLines] = useState([]);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.6);
   const mapRef = useRef(null);
   const viewportRef = useRef(null);
   const [status, setStatus] = useState('Loading terms…');
@@ -345,6 +345,14 @@ function TermMap() {
   for (const position of positions) { position.x -= minX; position.y -= minY; }
   const mapWidth = Math.max(1200, ...positions.map((p) => p.x + p.radius + 80));
   const mapHeight = Math.max(800, ...positions.map((p) => p.y + p.radius + 100));
+  const centered = useRef(false);
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (status || centered.current || !viewport) return;
+    viewport.scrollLeft = Math.max(0, (mapWidth * zoom - viewport.clientWidth) / 2);
+    viewport.scrollTop = Math.max(0, (mapHeight * zoom - viewport.clientHeight) / 2);
+    centered.current = true;
+  }, [status, mapWidth, mapHeight, zoom]);
   const count = matchedTerms.length;
   const activeTerm = terms.find((term) => term._id === active);
   const connectedIds = new Set((activeTerm?.relatedTerms || []).map(String));
