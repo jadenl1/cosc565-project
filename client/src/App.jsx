@@ -327,14 +327,24 @@ function TermMap() {
   const exact = matchedTerms.find((term) => [term.name, ...(term.aliases || [])].some((value) => value.toLowerCase() === needle));
   const active = hovered || (needle ? (exact || matchedTerms[0])?._id : null);
   const clusters = [...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b));
-  let rowTop = 100;
-  const positions = clusters.map(([category, entries], index) => {
-    const partner = clusters[index % 2 === 0 ? index + 1 : index - 1];
-    const radius = 85 * Math.sqrt(Math.max(entries.length, partner?.[1].length || 0));
-    const result = { category, entries, x: index % 2 ? 1500 : 500, y: rowTop + radius + 80, radius };
-    if (index % 2 === 1 || index === clusters.length - 1) rowTop += radius * 2 + 260;
-    return result;
-  });
+  const positions = [];
+  for (const [category, entries] of clusters) {
+    const radius = 78 * Math.sqrt(entries.length) + 130;
+    let x = 0, y = 0;
+    for (let attempt = 0; attempt < 10000; attempt++) {
+      const distance = 105 * Math.sqrt(attempt);
+      const angle = attempt * 2.399963;
+      x = Math.cos(angle) * distance;
+      y = Math.sin(angle) * distance;
+      if (positions.every((other) => Math.hypot(other.x - x, other.y - y) >= other.radius + radius + 90)) break;
+    }
+    positions.push({ category, entries, x, y, radius });
+  }
+  const minX = Math.min(0, ...positions.map((p) => p.x - p.radius - 80));
+  const minY = Math.min(0, ...positions.map((p) => p.y - p.radius - 100));
+  for (const position of positions) { position.x -= minX; position.y -= minY; }
+  const mapWidth = Math.max(1200, ...positions.map((p) => p.x + p.radius + 80));
+  const mapHeight = Math.max(800, ...positions.map((p) => p.y + p.radius + 100));
   const count = matchedTerms.length;
   const activeTerm = terms.find((term) => term._id === active);
   const connectedIds = new Set((activeTerm?.relatedTerms || []).map(String));
@@ -381,7 +391,7 @@ function TermMap() {
     for (const node of section.querySelectorAll('[data-term-id]')) {
       const box = node.getBoundingClientRect();
       const distance = Math.hypot(box.left + box.width / 2 - event.clientX, box.top + box.height / 2 - event.clientY);
-      node.style.setProperty('--near', String(Math.max(0, 1 - distance / 125)));
+      node.style.setProperty('--near', String(Math.max(0, 1 - distance / 200)));
     }
   }
   function resetMapMotion(event) {
@@ -405,8 +415,8 @@ function TermMap() {
           <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, +(value + 0.1).toFixed(1)))}>+</button>
         </div>
       <div className="map-viewport" ref={viewportRef} tabIndex={0} aria-label="Scrollable term map">
-        <div className="map-scale-space" style={{ width: 2000 * zoom, height: rowTop * zoom }}>
-        <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} style={{ width: 2000, height: rowTop, transform: `scale(${zoom})`, transformOrigin: 'top left' }} onPointerLeave={(event) => { setActive(null); resetMapMotion(event); }} onPointerMove={moveMap}>
+        <div className="map-scale-space" style={{ width: mapWidth * zoom, height: mapHeight * zoom }}>
+        <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} style={{ width: mapWidth, height: mapHeight, transform: `scale(${zoom})`, transformOrigin: 'top left' }} onPointerLeave={(event) => { setActive(null); resetMapMotion(event); }} onPointerMove={moveMap}>
           <svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} className={line.highlighted ? 'is-highlighted' : ''} style={{ color: line.color }} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
           {positions.map(({ category, entries, x, y, radius }) => <React.Fragment key={category}>
             <div className="map-cluster-label" style={{ left: x, top: y - radius - 60, color: categoryColor(category) }}>{category}</div>
