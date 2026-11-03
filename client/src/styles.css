@@ -138,7 +138,7 @@ input:focus-visible { outline: none; }
 .map-category h2 span { color: var(--muted); font-size: 11px; }
 .map-category ul { display: flex; flex-wrap: wrap; gap: 7px; padding: 0; margin: 0; list-style: none; }
 .map-category a { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 4px; background: #0c0e12; color: #b4bbc7; font-size: 12px; overflow-wrap: anywhere; transition: transform 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease; }
-.map-category a:hover, .map-category a:focus-visible { color: var(--primary); border-color: var(--focus); transform: translateY(-2px); }
+.map-category a:hover, .map-category a:focus-visible { color: var(--primary); border-color: var(--focus); }
 .term-map.is-searching .map-category a:not(.is-match) { opacity: .38; }
 .map-category a.is-match { color: #e2edff; border-color: var(--primary); background: #263b58; }
 .map-category svg { flex-shrink: 0; }
