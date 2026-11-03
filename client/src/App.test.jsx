@@ -190,3 +190,40 @@ test('storage failure does not claim a bookmark was saved', async () => {
     expect(screen.getByText('Could not save bookmark. Browser storage is unavailable.')).toBeTruthy();
   } finally { setter.mockRestore(); }
 });
+
+test('bookmarks navigation lists saved terms, opens them, and removes saved entries', async () => {
+  localStorage.setItem('techtionary.bookmarks', JSON.stringify(['api', 'ai']));
+  mockSearch();
+  render(<App />);
+  await userEvent.click(screen.getByRole('link', { name: 'Bookmarks', exact: true }));
+  await screen.findByRole('link', { name: term.name });
+  expect(screen.getByRole('link', { name: second.name })).toBeTruthy();
+  await userEvent.click(screen.getByRole('link', { name: term.name }));
+  await screen.findByRole('heading', { name: term.name });
+  await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+  await userEvent.click(screen.getByRole('link', { name: 'Bookmarks', exact: true }));
+  await screen.findByRole('link', { name: second.name });
+  expect(screen.queryByRole('link', { name: term.name })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+  await screen.findByText('No bookmarks yet. Save a term to find it here.');
+});
+
+test('bookmarks retain unavailable entries and allow retrying a failed load', async () => {
+  localStorage.setItem('techtionary.bookmarks', JSON.stringify(['api', 'missing']));
+  window.history.replaceState(null, '', '/#/bookmarks');
+  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: false, status: url.endsWith('/missing') ? 404 : 503 })));
+  render(<App />);
+  await screen.findByText('Could not load this term');
+  expect(screen.getByText('Term no longer available')).toBeTruthy();
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['api', 'missing']);
+  mockSearch();
+  await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+  await screen.findAllByRole('link', { name: term.name });
+});
+
+test('bookmarks page reports malformed storage without crashing', async () => {
+  localStorage.setItem('techtionary.bookmarks', '{invalid');
+  window.history.replaceState(null, '', '/#/bookmarks');
+  render(<App />);
+  await screen.findByText('Bookmarks could not be read from this browser.');
+});

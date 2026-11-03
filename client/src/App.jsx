@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiExternalLink, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
 
 async function searchTerms(query, signal) {
   const response = await fetch(`/api/terms?${new URLSearchParams({ q: query, suggest: true })}`, { signal });
@@ -130,7 +130,7 @@ function Search({ onChoose }) {
 const bookmarkKey = 'techtionary.bookmarks';
 function readBookmarks() {
   const saved = JSON.parse(localStorage.getItem(bookmarkKey) || '[]');
-  return Array.isArray(saved) ? saved.filter((id) => typeof id === 'string') : [];
+  return Array.isArray(saved) ? [...new Set(saved.filter((id) => typeof id === 'string' && id))] : [];
 }
 
 function Bookmark({ id }) {
@@ -143,7 +143,8 @@ function Bookmark({ id }) {
     }
     sync();
     window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
+    window.addEventListener('bookmarks-changed', sync);
+    return () => { window.removeEventListener('storage', sync); window.removeEventListener('bookmarks-changed', sync); };
   }, [id]);
   function toggle() {
     try {
@@ -152,6 +153,7 @@ function Bookmark({ id }) {
       catch (error) { if (error instanceof SyntaxError) bookmarks = []; else throw error; }
       const exists = bookmarks.includes(id);
       localStorage.setItem(bookmarkKey, JSON.stringify(exists ? bookmarks.filter((value) => value !== id) : [...bookmarks, id]));
+      window.dispatchEvent(new Event('bookmarks-changed'));
       setSaved(!exists);
       setError('');
     } catch { setError('Could not save bookmark. Browser storage is unavailable.'); }
@@ -162,6 +164,60 @@ function Bookmark({ id }) {
     </button>
     {error && <p role="status" className="bookmark-error">{error}</p>}
   </div>;
+}
+
+function Bookmarks() {
+  const [entries, setEntries] = useState([]);
+  const [message, setMessage] = useState('Loading bookmarks…');
+  const [revision, setRevision] = useState(0);
+  const heading = useRef(null);
+  useEffect(() => {
+    heading.current?.focus();
+    const refresh = () => setRevision((value) => value + 1);
+    window.addEventListener('storage', refresh);
+    window.addEventListener('bookmarks-changed', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('bookmarks-changed', refresh); };
+  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const ids = readBookmarks();
+        setMessage(ids.length ? 'Loading bookmarks…' : 'No bookmarks yet. Save a term to find it here.');
+        const results = [];
+        // Bound concurrent requests while reusing the term endpoint.
+        for (let start = 0; start < ids.length; start += 8) {
+          if (controller.signal.aborted) return;
+          results.push(...await Promise.all(ids.slice(start, start + 8).map(async (id) => {
+            try {
+              const response = await fetch(`/api/terms/${encodeURIComponent(id)}`, { signal: controller.signal });
+              if (response.status === 404) return { _id: id, name: 'Term no longer available', unavailable: true };
+              if (!response.ok) throw new Error('Request failed');
+              return (await response.json()).term;
+            } catch { return { _id: id, name: 'Could not load this term', unavailable: true, retryable: true }; }
+          })));
+        }
+        if (!controller.signal.aborted) { setEntries(results); if (ids.length) setMessage(''); }
+      } catch {
+        if (!controller.signal.aborted) { setEntries([]); setMessage('Bookmarks could not be read from this browser.'); }
+      }
+    }
+    load();
+    return () => controller.abort();
+  }, [revision]);
+  return <section className="definition-page bookmarks-page">
+    <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
+    <h1 ref={heading} tabIndex={-1}>Bookmarks</h1>
+    <p className="empty-detail">Saved in this browser.</p>
+    {message && <p role="status">{message}</p>}
+    {!message && <ul className="bookmark-list">{entries.map((term) => <li key={term._id}>
+      <div>{term.unavailable ? <p>{term.name}</p> : <>
+        <a href={`#/terms/${encodeURIComponent(term._id)}`}>{term.name}<FiArrowUpRight aria-hidden="true" /></a>
+        <p>{term.definition}</p>
+      </>}{term.retryable && <button className="retry" onClick={() => setRevision((value) => value + 1)}>Retry</button>}</div>
+      <Bookmark id={term._id} />
+    </li>)}</ul>}
+  </section>;
 }
 
 function Definition({ id }) {
@@ -215,7 +271,7 @@ function Definition({ id }) {
           </ul> : <p className="empty-detail">No related terms yet.</p>}
         </section>
         <section className="definition-section" aria-labelledby="references-heading">
-          <h2 id="references-heading">References</h2>
+          <h2 id="references-heading"><FiExternalLink aria-hidden="true" /> References</h2>
           {term.references?.length ? <ul className="reference-links">
             {term.references.map((reference, index) => <li key={`${reference.url}-${index}`}><a href={reference.url} target="_blank" rel="noopener noreferrer">
               {reference.title || reference.url}<FiArrowUpRight aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span>
@@ -260,8 +316,11 @@ export default function App() {
   const match = route.match(/^#\/terms\/([^/]+)$/);
   return (
     <main ref={page}>
-      <a className="brand-mark" href="#/" aria-label="Buzzword Techtionary home">[b]</a>
-      {match ? <Definition key={match[1]} id={match[1]} /> : <Search onChoose={openDefinition} />}
+      <header className="site-header">
+        <a className="brand-mark" href="#/" aria-label="Buzzword Techtionary home">[b]</a>
+        <nav aria-label="Main navigation"><a className="bookmarks-link" href="#/bookmarks" aria-current={route === '#/bookmarks' ? 'page' : undefined}><FiBookmark aria-hidden="true" /> Bookmarks</a></nav>
+      </header>
+      {match ? <Definition key={match[1]} id={match[1]} /> : route === '#/bookmarks' ? <Bookmarks /> : <Search onChoose={openDefinition} />}
     </main>
   );
 }
