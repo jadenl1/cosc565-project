@@ -170,6 +170,8 @@ function Bookmarks() {
   const [entries, setEntries] = useState([]);
   const [message, setMessage] = useState('Loading bookmarks…');
   const [revision, setRevision] = useState(0);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const heading = useRef(null);
   useEffect(() => {
     heading.current?.focus();
@@ -205,18 +207,33 @@ function Bookmarks() {
     load();
     return () => controller.abort();
   }, [revision]);
+  const filtered = entries.filter((term) => `${term.name} ${term.definition || ''}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const pageCount = Math.ceil(filtered.length / 10);
+  const visible = filtered.slice((page - 1) * 10, page * 10);
   return <section className="definition-page bookmarks-page">
     <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
     <h1 ref={heading} tabIndex={-1}>Bookmarks</h1>
     <p className="empty-detail">Saved in this browser.</p>
+    {!message && entries.length > 0 && <form className="bookmark-search" onSubmit={(event) => event.preventDefault()}>
+      <label className="sr-only" htmlFor="bookmark-search">Search bookmarks</label>
+      <FiSearch aria-hidden="true" />
+      <input id="bookmark-search" type="search" placeholder="Search bookmarks…" value={query}
+        onChange={(event) => { setQuery(event.target.value); setPage(1); }} />
+    </form>}
     {message && <p role="status">{message}</p>}
-    {!message && <ul className="bookmark-list">{entries.map((term) => <li key={term._id}>
+    {!message && entries.length > 0 && filtered.length === 0 && <p role="status">No bookmarks match “{query}”.</p>}
+    {!message && <ul className="bookmark-list">{visible.map((term) => <li key={term._id}>
       <div>{term.unavailable ? <p>{term.name}</p> : <>
         <a href={`#/terms/${encodeURIComponent(term._id)}`}>{term.name}<FiArrowUpRight aria-hidden="true" /></a>
         <p>{term.definition}</p>
       </>}{term.retryable && <button className="retry" onClick={() => setRevision((value) => value + 1)}>Retry</button>}</div>
       <Bookmark id={term._id} />
     </li>)}</ul>}
+    {pageCount > 1 && <nav className="bookmark-pagination" aria-label="Bookmark pages">
+      <button className="retry" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button>
+      <span aria-live="polite">Page {page} of {pageCount}</span>
+      <button className="retry" disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</button>
+    </nav>}
   </section>;
 }
 

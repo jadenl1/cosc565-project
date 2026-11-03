@@ -200,7 +200,7 @@ test('bookmarks navigation lists saved terms, opens them, and removes saved entr
   expect(screen.getByRole('link', { name: second.name })).toBeTruthy();
   await userEvent.click(screen.getByRole('link', { name: term.name }));
   await screen.findByRole('heading', { name: term.name });
-  await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Remove bookmark' }));
   await userEvent.click(screen.getByRole('link', { name: 'Bookmarks', exact: true }));
   await screen.findByRole('link', { name: second.name });
   expect(screen.queryByRole('link', { name: term.name })).toBeNull();

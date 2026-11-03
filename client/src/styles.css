@@ -51,7 +51,7 @@ input:focus-visible { outline: none; }
 .definition-section { margin-top: 32px; }
 .definition-section h2 { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font-size: 12px; font-weight: 400; }
 .definition-section h2 svg { font-size: 14px; }
-.definition { color: #b4bbc7; font-size: 16px; line-height: 1.85; margin: 12px 0 0; }
+.definition { color: var(--text); font-size: 16px; line-height: 1.85; margin: 12px 0 0; }
 [role='status'] { color: var(--muted); }
 .retry { background: transparent; border: 1px solid var(--line); border-radius: 6px; color: var(--primary); padding: 6px 16px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
@@ -104,3 +104,10 @@ input:focus-visible { outline: none; }
 .bookmark-list p { color: var(--muted); font-size: 13px; margin: 6px 0 0; overflow-wrap: anywhere; }
 .bookmark-list .bookmark-control { flex-shrink: 0; }
 .bookmark-list .bookmark-error { max-width: 120px; }
+
+.bookmark-search { display: flex; align-items: center; gap: 10px; margin-top: 24px; padding: 7px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; color: var(--muted); }
+.bookmark-search:focus-within { border-color: var(--focus); }
+.bookmark-search input { font-size: 13px; }
+.bookmark-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 22px; }
+.bookmark-pagination span { color: var(--muted); font-size: 12px; }
+.bookmark-pagination button:disabled { cursor: default; opacity: .45; }
