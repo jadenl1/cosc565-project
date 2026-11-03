@@ -76,3 +76,18 @@ input:focus-visible { outline: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+.term-toolbar { display: flex; justify-content: flex-end; margin: -54px 0 28px 130px; min-height: 26px; }
+.bookmark-control { text-align: right; }
+.bookmark-button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 4px; background: transparent; color: var(--muted); padding: 4px 9px; font-size: 12px; }
+.bookmark-button:hover, .bookmark-button[aria-pressed='true'] { color: var(--primary); background: var(--surface); }
+.bookmark-button[aria-pressed='true'] svg { fill: currentColor; }
+.bookmark-error { font-size: 12px; max-width: 250px; }
+.origin-label, .empty-detail { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+.related-terms, .reference-links { list-style: none; padding: 0; margin: 12px 0 0; }
+.related-terms { display: flex; flex-wrap: wrap; gap: 8px; }
+.related-terms a { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; font-size: 12px; }
+.related-terms a:hover { color: var(--primary); background: var(--surface); }
+.reference-links a { display: inline-flex; align-items: baseline; gap: 8px; font-size: 13px; color: var(--primary); overflow-wrap: anywhere; }
+.reference-links a:hover { text-decoration: underline; }
+.reference-links svg, .related-terms svg { flex-shrink: 0; }

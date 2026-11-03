@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
 
 async function searchTerms(query, signal) {
   const response = await fetch(`/api/terms?${new URLSearchParams({ q: query, suggest: true })}`, { signal });
@@ -127,6 +127,43 @@ function Search({ onChoose }) {
   );
 }
 
+const bookmarkKey = 'techtionary.bookmarks';
+function readBookmarks() {
+  const saved = JSON.parse(localStorage.getItem(bookmarkKey) || '[]');
+  return Array.isArray(saved) ? saved.filter((id) => typeof id === 'string') : [];
+}
+
+function Bookmark({ id }) {
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    function sync() {
+      try { setSaved(readBookmarks().includes(id)); setError(''); }
+      catch { setError('Bookmarks are unavailable in this browser.'); }
+    }
+    sync();
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, [id]);
+  function toggle() {
+    try {
+      let bookmarks;
+      try { bookmarks = readBookmarks(); }
+      catch (error) { if (error instanceof SyntaxError) bookmarks = []; else throw error; }
+      const exists = bookmarks.includes(id);
+      localStorage.setItem(bookmarkKey, JSON.stringify(exists ? bookmarks.filter((value) => value !== id) : [...bookmarks, id]));
+      setSaved(!exists);
+      setError('');
+    } catch { setError('Could not save bookmark. Browser storage is unavailable.'); }
+  }
+  return <div className="bookmark-control">
+    <button className="bookmark-button" onClick={toggle} aria-pressed={saved} aria-label={saved ? 'Remove bookmark' : 'Bookmark term'}>
+      <FiBookmark aria-hidden="true" /> {saved ? 'Saved' : 'Save'}
+    </button>
+    {error && <p role="status" className="bookmark-error">{error}</p>}
+  </div>;
+}
+
 function Definition({ id }) {
   const [term, setTerm] = useState(null);
   const [message, setMessage] = useState('Loading definition…');
@@ -157,15 +194,33 @@ function Definition({ id }) {
     <article className="definition-page">
       <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
       {term ? <>
+        <div className="term-toolbar"><Bookmark id={id} /></div>
         <div className="term-heading">
           <h1 ref={heading} tabIndex={-1}>{term.name}</h1>
-          {term.aliases.length > 0 && <ul className="alias-tags" aria-label="Aliases">
+          {(term.aliases || []).length > 0 && <ul className="alias-tags" aria-label="Aliases">
             {term.aliases.map((alias) => <li key={alias}>{alias}</li>)}
           </ul>}
         </div>
         <section className="definition-section" aria-labelledby="definition-heading">
           <h2 id="definition-heading"><FiBookOpen aria-hidden="true" /> Definition</h2>
-          <p className="definition">{term.definition}</p>
+          <p className="definition">{term.definition || 'No definition available yet.'}</p>
+          {term.origin === 'ai-generated' && <p className="origin-label">AI-generated definition</p>}
+        </section>
+        <section className="definition-section" aria-labelledby="related-heading">
+          <h2 id="related-heading"><FiLink aria-hidden="true" /> Related terms</h2>
+          {term.relatedTerms?.length ? <ul className="related-terms">
+            {term.relatedTerms.map((related) => <li key={related._id}><a href={`#/terms/${encodeURIComponent(related._id)}`}>
+              {related.name}<FiArrowUpRight aria-hidden="true" />
+            </a></li>)}
+          </ul> : <p className="empty-detail">No related terms yet.</p>}
+        </section>
+        <section className="definition-section" aria-labelledby="references-heading">
+          <h2 id="references-heading">References</h2>
+          {term.references?.length ? <ul className="reference-links">
+            {term.references.map((reference, index) => <li key={`${reference.url}-${index}`}><a href={reference.url} target="_blank" rel="noopener noreferrer">
+              {reference.title || reference.url}<FiArrowUpRight aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span>
+            </a></li>)}
+          </ul> : <p className="empty-detail">No references available yet.</p>}
         </section>
       </> : <div role="status"><p>{message}</p>{message !== 'Loading definition…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div>}
     </article>

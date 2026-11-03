@@ -9,6 +9,7 @@ const term = { _id: 'api', name: 'Application Programming Interface', aliases: [
 const second = { _id: 'ai', name: 'Artificial Intelligence', aliases: ['AI'], definition: 'Learning and reasoning.' };
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
   window.history.replaceState(null, '', '/');
 });
@@ -138,4 +139,54 @@ test('waits for the exit animation before opening a definition', async () => {
     if (original) HTMLElement.prototype.animate = original;
     else delete HTMLElement.prototype.animate;
   }
+});
+
+test('related terms navigate to their definition and references open safely', async () => {
+  window.history.replaceState(null, '', '/#/terms/api');
+  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: true, json: async () => ({ term: url.endsWith('/ai') ? second : {
+    ...term, relatedTerms: [second], references: [{ title: 'API documentation', url: 'https://developer.mozilla.org/en-US/docs/Glossary/API' }], origin: 'ai-generated',
+  } }) })));
+  render(<App />);
+  const link = await screen.findByRole('link', { name: /API documentation/ });
+  expect(link.getAttribute('target')).toBe('_blank');
+  expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  expect(screen.getByText('AI-generated definition')).toBeTruthy();
+  await userEvent.click(screen.getByRole('link', { name: second.name }));
+  await screen.findByRole('heading', { name: second.name });
+  expect(screen.getByText('No related terms yet.')).toBeTruthy();
+  expect(screen.getByText('No references available yet.')).toBeTruthy();
+});
+
+test('bookmarks survive remount and can be removed without removing other bookmarks', async () => {
+  localStorage.setItem('techtionary.bookmarks', JSON.stringify(['ai']));
+  window.history.replaceState(null, '', '/#/terms/api');
+  mockSearch();
+  const view = render(<App />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Bookmark term' }));
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['ai', 'api']);
+  view.unmount();
+  render(<App />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Remove bookmark' }));
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['ai']);
+});
+
+test('corrupt bookmark data can be replaced by a new save', async () => {
+  localStorage.setItem('techtionary.bookmarks', '{broken');
+  window.history.replaceState(null, '', '/#/terms/api');
+  mockSearch();
+  render(<App />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Bookmark term' }));
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['api']);
+});
+
+test('storage failure does not claim a bookmark was saved', async () => {
+  window.history.replaceState(null, '', '/#/terms/api');
+  mockSearch();
+  const setter = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Quota exceeded'); });
+  try {
+    render(<App />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Bookmark term' }));
+    expect(screen.getByRole('button', { name: 'Bookmark term' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByText('Could not save bookmark. Browser storage is unavailable.')).toBeTruthy();
+  } finally { setter.mockRestore(); }
 });
