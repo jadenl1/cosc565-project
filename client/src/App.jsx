@@ -284,6 +284,11 @@ const mapCategories = [
   ['Programming', /algorithm|function|argument|parameter|scope|closure|class|constructor|inherit|compil|interpre|variable|constant|type|recursion|promise|async|thread|exception|flow|boolean|primitive|javascript|ecmascript|garbage|memory|method|return|property|code|git|version|minif|debounce|throttle/i],
   ['AI & learning', /artificial intelligence|machine learning|neural|model|training/i],
 ];
+const categoryColors = {
+  'Security': '#f28b82', 'Web & interfaces': '#a8c7fa', 'Networking': '#81c995',
+  'Data & storage': '#fdd663', 'Programming': '#c4a7ff', 'AI & learning': '#ff9ecd', 'Other': '#9aa4b2',
+};
+function categoryColor(category) { return categoryColors[category] || categoryColors.Other; }
 function categoryFor(term) {
   if (typeof term.category === 'string' && term.category.trim()) return term.category.trim();
   const name = [term.name, ...(term.aliases || [])].join(' ');
@@ -371,8 +376,8 @@ function TermMap() {
     </div>
     {needle && !status && <p className="map-count" role="status">{count ? `${count} matching ${count === 1 ? 'term' : 'terms'} highlighted` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
-      <div ref={mapRef} className={`term-map${needle ? ' is-searching' : ''}${active ? ' has-active' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
-        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} onPointerMove={moveMap} onPointerLeave={resetMapMotion}>
+      <div ref={mapRef} className={`term-map${needle ? ' is-searching' : ''}${active ? ' has-active' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true" style={{ color: activeTerm ? categoryColor(categoryFor(activeTerm)) : undefined }}>{lines.map((line) => <line key={line.id} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
+        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} style={{ '--category-color': categoryColor(category) }} onPointerMove={moveMap} onPointerLeave={resetMapMotion}>
           <h2>{category}<span>{entries.length}</span></h2>
           <ul>{entries.map((term) => <li key={term._id}><a data-term-id={term._id} className={[matches(term) && 'is-match', active && (term._id === active || connectedIds.has(String(term._id))) && 'is-connected'].filter(Boolean).join(' ')} onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
             {term.name}<FiArrowUpRight aria-hidden="true" />
