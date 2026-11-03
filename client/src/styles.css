@@ -153,3 +153,8 @@ input:focus-visible { outline: none; }
 
 .term-map.has-active .map-category a:not(.is-connected) { opacity: .2; }
 .term-map.has-active .map-category a.is-connected { opacity: 1; }
+
+.map-category { background: radial-gradient(280px circle at var(--pointer-x, -1000px) var(--pointer-y, -1000px), #263d5b, transparent), var(--surface); }
+.map-category li { transform: translate(var(--drift-x, 0), var(--drift-y, 0)); transition: transform 240ms ease-out; }
+.map-category a:hover, .map-category a:focus-visible { box-shadow: 0 0 18px #83b4ff88; }
+@media (prefers-reduced-motion: reduce) { .map-category { background: var(--surface); } .map-category li { transform: none !important; } }

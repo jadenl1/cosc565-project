@@ -333,10 +333,34 @@ function TermMap() {
       const related = new Set((selected.relatedTerms || []).map(String));
       setLines(nodes.filter((node) => related.has(node.dataset.termId)).map((node) => ({ id: node.dataset.termId, from, to: center(node) })));
     }
-    updateLines();
-    window.addEventListener('resize', updateLines);
-    return () => window.removeEventListener('resize', updateLines);
+    let frame;
+    function follow() { updateLines(); frame = requestAnimationFrame(follow); }
+    if (active) follow(); else setLines([]);
+    return () => cancelAnimationFrame(frame);
   }, [active, terms, query]);
+  function moveMap(event) {
+    if (event.pointerType !== 'mouse' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const section = event.currentTarget;
+    const rect = section.getBoundingClientRect();
+    section.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
+    section.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`);
+    for (const item of section.querySelectorAll('li')) {
+      if (item.contains(event.target)) { item.style.removeProperty('--drift-x'); item.style.removeProperty('--drift-y'); continue; }
+      const box = item.getBoundingClientRect();
+      const dx = box.left + box.width / 2 - event.clientX;
+      const dy = box.top + box.height / 2 - event.clientY;
+      const distance = Math.hypot(dx, dy);
+      const strength = Math.max(0, 1 - distance / 150) * 7;
+      item.style.setProperty('--drift-x', `${distance ? dx / distance * strength : 0}px`);
+      item.style.setProperty('--drift-y', `${distance ? dy / distance * strength : 0}px`);
+    }
+  }
+  function resetMapMotion(event) {
+    const section = event.currentTarget;
+    section.style.removeProperty('--pointer-x');
+    section.style.removeProperty('--pointer-y');
+    section.querySelectorAll('li').forEach((item) => { item.style.removeProperty('--drift-x'); item.style.removeProperty('--drift-y'); });
+  }
   return <section className="map-page">
     <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
     <h1>Explore the map</h1>
@@ -348,7 +372,7 @@ function TermMap() {
     {needle && !status && <p className="map-count" role="status">{count ? `${count} matching ${count === 1 ? 'term' : 'terms'} highlighted` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
       <div ref={mapRef} className={`term-map${needle ? ' is-searching' : ''}${active ? ' has-active' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
-        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category}>
+        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} onPointerMove={moveMap} onPointerLeave={resetMapMotion}>
           <h2>{category}<span>{entries.length}</span></h2>
           <ul>{entries.map((term) => <li key={term._id}><a data-term-id={term._id} className={[matches(term) && 'is-match', active && (term._id === active || connectedIds.has(String(term._id))) && 'is-connected'].filter(Boolean).join(' ')} onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
             {term.name}<FiArrowUpRight aria-hidden="true" />
