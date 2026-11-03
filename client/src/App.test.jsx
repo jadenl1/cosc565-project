@@ -204,7 +204,7 @@ test('bookmarks navigation lists saved terms, opens them, and removes saved entr
   await userEvent.click(screen.getByRole('link', { name: 'Bookmarks', exact: true }));
   await screen.findByRole('link', { name: second.name });
   expect(screen.queryByRole('link', { name: term.name })).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+  await userEvent.click(screen.getByRole('button', { name: `Remove bookmark ${second.name}` }));
   await screen.findByText('No bookmarks yet. Save a term to find it here.');
 });
 
@@ -226,4 +226,18 @@ test('bookmarks page reports malformed storage without crashing', async () => {
   window.history.replaceState(null, '', '/#/bookmarks');
   render(<App />);
   await screen.findByText('Bookmarks could not be read from this browser.');
+});
+
+
+test('map highlights matching names and aliases and opens a term', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: true, json: async () => url === '/api/term-map' ? { terms: [term, second] } : { term } })));
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(screen.getByRole('link', { name: 'Explore' }));
+  const link = await screen.findByRole('link', { name: term.name });
+  await user.type(screen.getByRole('searchbox', { name: 'Search the map' }), 'API');
+  expect(link.classList.contains('is-match')).toBe(true);
+  expect(screen.getByText('1 matching term highlighted')).toBeTruthy();
+  await user.click(link);
+  await screen.findByRole('heading', { name: term.name });
 });

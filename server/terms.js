@@ -28,6 +28,9 @@ export function createTermRepository(collection) {
       }).map(({ title, url }) => ({ title: typeof title === 'string' && title.trim() ? title : url, url }));
       return term;
     },
+    async listForMap() {
+      return collection.find({}, { projection: { name: 1, aliases: 1, category: 1 } }).sort({ name: 1 }).toArray();
+    },
     async search(query, limit) {
       return collection.find({ searchPrefixes: normalize(query) }, {
         projection: { name: 1, aliases: 1, definition: 1 },

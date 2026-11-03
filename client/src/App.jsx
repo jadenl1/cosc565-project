@@ -276,6 +276,72 @@ function Bookmarks() {
   </section>;
 }
 
+const mapCategories = [
+  ['Security', /secur|crypt|auth|encrypt|decrypt|cipher|attack|forgery|script(ing)?$|credential|signature|hash|denial|cors|policy|origin|immutable|mutable/i],
+  ['Web & interfaces', /html|css|dom|browser|web|element|attribute|accessib|aria|responsive|viewport|render|hydration|cookie|api|rest|http|uri|url|document/i],
+  ['Networking', /network|tcp|udp|dns|domain|packet|bandwidth|latency|cdn|tls|ip address|socket/i],
+  ['Data & storage', /database|sql|data|array|object|json|serializ|cache|buffer|encoding|unicode|utf|base64|byte|string/i],
+  ['Programming', /algorithm|function|argument|parameter|scope|closure|class|constructor|inherit|compil|interpre|variable|constant|type|recursion|promise|async|thread|exception|flow|boolean|primitive|javascript|ecmascript|garbage|memory|method|return|property|code|git|version|minif|debounce|throttle/i],
+  ['AI & learning', /artificial intelligence|machine learning|neural|model|training/i],
+];
+function categoryFor(term) {
+  if (typeof term.category === 'string' && term.category.trim()) return term.category.trim();
+  const name = [term.name, ...(term.aliases || [])].join(' ');
+  return mapCategories.find(([, pattern]) => pattern.test(name))?.[0] || 'Other';
+}
+
+function TermMap() {
+  const [terms, setTerms] = useState([]);
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('Loading terms…');
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setStatus('Loading terms…');
+    fetch('/api/term-map', { signal: controller.signal }).then((response) => {
+      if (!response.ok) throw new Error();
+      return response.json();
+    }).then((data) => { if (!controller.signal.aborted) { setTerms(data.terms); setStatus(''); } })
+      .catch(() => { if (!controller.signal.aborted) setStatus('Could not load the map.'); });
+    return () => controller.abort();
+  }, [attempt]);
+  const needle = query.trim().toLowerCase();
+  const matches = (term) => needle && [term.name, ...(term.aliases || [])].some((value) => value.toLowerCase().includes(needle));
+  const groups = new Map();
+  for (const term of terms) {
+    const category = categoryFor(term);
+    if (!groups.has(category)) groups.set(category, []);
+    groups.get(category).push(term);
+  }
+  const count = terms.filter(matches).length;
+  function move(event) {
+    if (event.pointerType !== 'mouse' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
+    event.currentTarget.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`);
+  }
+  return <section className="map-page">
+    <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
+    <h1>Explore the map</h1>
+    <p className="map-caption">Browse terms by category.</p>
+    <div className="search-box map-search"><FiSearch className="search-icon" aria-hidden="true" />
+      <label className="sr-only" htmlFor="map-search">Search the map</label>
+      <input id="map-search" type="search" placeholder="Find a term…" value={query} onChange={(event) => setQuery(event.target.value)} />
+    </div>
+    {needle && !status && <p className="map-count" role="status">{count ? `${count} matching ${count === 1 ? 'term' : 'terms'} highlighted` : 'No matching terms.'}</p>}
+    {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
+      <div className={`term-map${needle ? ' is-searching' : ''}`}>
+        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} onPointerMove={move} onPointerLeave={(event) => { event.currentTarget.style.removeProperty('--pointer-x'); event.currentTarget.style.removeProperty('--pointer-y'); }}>
+          <h2>{category}<span>{entries.length}</span></h2>
+          <ul>{entries.map((term) => <li key={term._id}><a className={matches(term) ? 'is-match' : ''} href={`#/terms/${encodeURIComponent(term._id)}`}>
+            {term.name}<FiArrowUpRight aria-hidden="true" />
+          </a></li>)}</ul>
+        </section>)}
+        {!terms.length && <p>No terms available yet.</p>}
+      </div>}
+  </section>;
+}
+
 function Definition({ id }) {
   const [term, setTerm] = useState(null);
   const [message, setMessage] = useState('Loading definition…');
@@ -373,9 +439,9 @@ export default function App() {
     <main ref={page}>
       <header className="site-header">
         <a className="brand-mark" href="#/" aria-label="Buzzword Techtionary home">[b]</a>
-        <nav aria-label="Main navigation"><a className="bookmarks-link" href="#/bookmarks" aria-current={route === '#/bookmarks' ? 'page' : undefined}><FiBookmark aria-hidden="true" /> Bookmarks</a></nav>
+        <nav className="main-nav" aria-label="Main navigation"><a className="bookmarks-link" href="#/map" aria-current={route === '#/map' ? 'page' : undefined}>Explore</a><a className="bookmarks-link" href="#/bookmarks" aria-current={route === '#/bookmarks' ? 'page' : undefined}><FiBookmark aria-hidden="true" /> Bookmarks</a></nav>
       </header>
-      {match ? <Definition key={match[1]} id={match[1]} /> : route === '#/bookmarks' ? <Bookmarks /> : <Search onChoose={openDefinition} />}
+      {match ? <Definition key={match[1]} id={match[1]} /> : route === '#/bookmarks' ? <Bookmarks /> : route === '#/map' ? <TermMap /> : <Search onChoose={openDefinition} />}
     </main>
   );
 }

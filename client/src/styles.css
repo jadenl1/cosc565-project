@@ -126,3 +126,20 @@ input:focus-visible { outline: none; }
 .bookmark-toast .toast-dismiss:hover { color: var(--text); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes toast-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }
+
+.main-nav { display: flex; align-items: center; gap: 20px; }
+.map-page { width: min(1040px, 100%); margin: max(55px, 12svh) auto 80px; }
+.map-page h1 { margin: 0; }
+.map-caption, .map-count { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+.map-search { width: min(420px, 100%); margin: 24px 0; }
+.term-map { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; margin-top: 20px; }
+.map-category { position: relative; overflow: hidden; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: radial-gradient(300px circle at calc(var(--pointer-x, -1000px) - var(--category-x, 0px)) calc(var(--pointer-y, -1000px) - var(--category-y, 0px)), #22334a 0%, transparent 100%), var(--surface); }
+.map-category h2 { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 14px; color: var(--text); font-size: 13px; font-weight: 400; }
+.map-category h2 span { color: var(--muted); font-size: 11px; }
+.map-category ul { display: flex; flex-wrap: wrap; gap: 7px; padding: 0; margin: 0; list-style: none; }
+.map-category a { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 4px; background: #0c0e12; color: #b4bbc7; font-size: 12px; overflow-wrap: anywhere; transition: transform 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease; }
+.map-category a:hover, .map-category a:focus-visible { color: var(--primary); border-color: var(--focus); transform: translateY(-2px); }
+.term-map.is-searching .map-category a:not(.is-match) { opacity: .38; }
+.map-category a.is-match { color: #e2edff; border-color: var(--primary); background: #263b58; }
+.map-category svg { flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { .map-category { background: var(--surface); } }
