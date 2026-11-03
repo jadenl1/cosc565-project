@@ -177,3 +177,16 @@ input:focus-visible { outline: none; }
 .main-nav .bookmarks-link svg { font-size: 14px; color: var(--muted); }
 .main-nav .bookmarks-link:hover, .main-nav .bookmarks-link[aria-current='page'] { border-color: var(--focus); background: var(--hover); color: var(--primary); }
 .main-nav .bookmarks-link:hover svg, .main-nav .bookmarks-link[aria-current='page'] svg { color: var(--primary); }
+
+/* Network clusters keep their labels grouped while the connections span categories. */
+.term-map { padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: radial-gradient(circle at 50% 0%, #172131, #0e1117 50%); }
+.map-category { padding: 20px 12px; border: 0; background: transparent; }
+.map-category h2 { padding-bottom: 10px; border-bottom: 1px solid color-mix(in srgb, var(--category-color) 28%, transparent); letter-spacing: .03em; }
+.map-category ul { gap: 12px 9px; }
+.map-category a { border-radius: 20px; padding: 6px 11px; border-color: color-mix(in srgb, var(--category-color) 40%, var(--line)); background: #10151e; }
+.map-category a::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--category-color); flex-shrink: 0; }
+.map-connections line { opacity: .16; stroke-width: 1; animation: none; }
+.map-connections line.is-highlighted { opacity: .85; stroke-width: 1.5; }
+.term-map.has-active .map-connections line:not(.is-highlighted) { opacity: .035; }
+@media (min-width: 900px) { .map-category { margin-bottom: 14px; } }
+@media (prefers-reduced-motion: reduce) { .map-category { background: transparent; } }
