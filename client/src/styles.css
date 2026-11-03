@@ -144,13 +144,9 @@ input:focus-visible { outline: none; }
 .map-category svg { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) { .map-category { background: var(--surface); } }
 
-.map-category { transition: border-color 220ms ease, box-shadow 220ms ease; }
-.map-category:hover { border-color: #536d91; box-shadow: 0 0 28px #5686c019, inset 0 0 30px #669ed70a; }
- .map-category::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; background-image: radial-gradient(circle, #a8c7fa 1px, transparent 1.5px); background-size: 22px 22px; mask-image: radial-gradient(140px circle at var(--pointer-x, -1000px) var(--pointer-y, -1000px), #000 0%, transparent 100%); transition: opacity 180ms ease; }
-.map-category:hover::before { opacity: .45; }
-.map-category h2, .map-category ul { position: relative; }
-.map-category a { transition: color 150ms ease, border-color 150ms ease, opacity 150ms ease, background-color 150ms ease, box-shadow 150ms ease; }
-.map-category a:hover, .map-category a:focus-visible { transform: none; background: #1c2b40; box-shadow: 0 0 16px #76a8f344; }
-.map-category a:hover svg { transform: translate(2px, -2px); }
-.map-category a svg { transition: transform 150ms ease; }
-@media (prefers-reduced-motion: reduce) { .map-category::before { display: none; } .map-category a:hover svg { transform: none; } }
+
+.map-category { overflow: visible; background: var(--surface); }
+.map-category a { position: relative; z-index: 2; }
+.map-connections { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+.map-connections line { stroke: #a8c7fa; stroke-width: 1.5; opacity: .75; stroke-dasharray: 5 4; animation: connection-in 200ms ease-out both; }
+@keyframes connection-in { from { opacity: 0; } to { opacity: .75; } }

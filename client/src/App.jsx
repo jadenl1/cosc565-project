@@ -293,6 +293,9 @@ function categoryFor(term) {
 function TermMap() {
   const [terms, setTerms] = useState([]);
   const [query, setQuery] = useState('');
+  const [active, setActive] = useState(null);
+  const [lines, setLines] = useState([]);
+  const mapRef = useRef(null);
   const [status, setStatus] = useState('Loading terms…');
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -314,33 +317,38 @@ function TermMap() {
     groups.get(category).push(term);
   }
   const count = terms.filter(matches).length;
-  function move(event) {
-    if (event.pointerType !== 'mouse' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    event.currentTarget.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
-    event.currentTarget.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`);
-
-  }
-  function resetMapMotion(event) {
-    const section = event.currentTarget;
-    section.style.removeProperty('--pointer-x');
-    section.style.removeProperty('--pointer-y');
-
-  }
+  useEffect(() => {
+    function updateLines() {
+      const map = mapRef.current;
+      if (!map || !active) { setLines([]); return; }
+      const selected = terms.find((term) => term._id === active);
+      const nodes = [...map.querySelectorAll('[data-term-id]')];
+      const origin = nodes.find((node) => node.dataset.termId === active);
+      if (!origin || !selected) { setLines([]); return; }
+      const bounds = map.getBoundingClientRect();
+      const center = (node) => { const rect = node.getBoundingClientRect(); return { x: rect.left + rect.width / 2 - bounds.left, y: rect.top + rect.height / 2 - bounds.top }; };
+      const from = center(origin);
+      const related = new Set((selected.relatedTerms || []).map(String));
+      setLines(nodes.filter((node) => related.has(node.dataset.termId)).map((node) => ({ id: node.dataset.termId, from, to: center(node) })));
+    }
+    updateLines();
+    window.addEventListener('resize', updateLines);
+    return () => window.removeEventListener('resize', updateLines);
+  }, [active, terms, query]);
   return <section className="map-page">
     <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
     <h1>Explore the map</h1>
-    <p className="map-caption">Browse terms by category.</p>
+    <p className="map-caption">Hover or focus a term to see its connections.</p>
     <div className="search-box map-search"><FiSearch className="search-icon" aria-hidden="true" />
       <label className="sr-only" htmlFor="map-search">Search the map</label>
       <input id="map-search" type="search" placeholder="Find a term…" value={query} onChange={(event) => setQuery(event.target.value)} />
     </div>
     {needle && !status && <p className="map-count" role="status">{count ? `${count} matching ${count === 1 ? 'term' : 'terms'} highlighted` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
-      <div className={`term-map${needle ? ' is-searching' : ''}`}>
-        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} onPointerMove={move} onPointerLeave={resetMapMotion}>
+      <div ref={mapRef} className={`term-map${needle ? ' is-searching' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
+        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category}>
           <h2>{category}<span>{entries.length}</span></h2>
-          <ul>{entries.map((term) => <li key={term._id}><a className={matches(term) ? 'is-match' : ''} href={`#/terms/${encodeURIComponent(term._id)}`}>
+          <ul>{entries.map((term) => <li key={term._id}><a data-term-id={term._id} className={matches(term) ? 'is-match' : ''} onPointerEnter={() => setActive(term._id)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
             {term.name}<FiArrowUpRight aria-hidden="true" />
           </a></li>)}</ul>
         </section>)}

@@ -29,7 +29,7 @@ export function createTermRepository(collection) {
       return term;
     },
     async listForMap() {
-      return collection.find({}, { projection: { name: 1, aliases: 1, category: 1 } }).sort({ name: 1 }).toArray();
+      return collection.find({}, { projection: { name: 1, aliases: 1, category: 1, relatedTerms: 1 } }).sort({ name: 1 }).toArray();
     },
     async search(query, limit) {
       return collection.find({ searchPrefixes: normalize(query) }, {
