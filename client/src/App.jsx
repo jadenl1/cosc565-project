@@ -301,6 +301,7 @@ function TermMap() {
   const [hovered, setActive] = useState(null);
   const [lines, setLines] = useState([]);
   const mapRef = useRef(null);
+  const viewportRef = useRef(null);
   const [status, setStatus] = useState('Loading terms…');
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -324,6 +325,15 @@ function TermMap() {
   const matchedTerms = terms.filter(matches);
   const exact = matchedTerms.find((term) => [term.name, ...(term.aliases || [])].some((value) => value.toLowerCase() === needle));
   const active = hovered || (needle ? (exact || matchedTerms[0])?._id : null);
+  const clusters = [...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b));
+  let rowTop = 100;
+  const positions = clusters.map(([category, entries], index) => {
+    const partner = clusters[index % 2 === 0 ? index + 1 : index - 1];
+    const radius = 85 * Math.sqrt(Math.max(entries.length, partner?.[1].length || 0));
+    const result = { category, entries, x: index % 2 ? 1500 : 500, y: rowTop + radius + 80, radius };
+    if (index % 2 === 1 || index === clusters.length - 1) rowTop += radius * 2 + 260;
+    return result;
+  });
   const count = matchedTerms.length;
   const activeTerm = terms.find((term) => term._id === active);
   const connectedIds = new Set((activeTerm?.relatedTerms || []).map(String));
@@ -355,6 +365,12 @@ function TermMap() {
     window.addEventListener('resize', updateLines);
     return () => { observer?.disconnect(); window.removeEventListener('resize', updateLines); };
   }, [active, terms, query]);
+  useEffect(() => {
+    if (!needle || hovered || !active || !mapRef.current || !viewportRef.current) return;
+    const node = [...mapRef.current.querySelectorAll('[data-term-id]')].find((element) => element.dataset.termId === active);
+    const viewport = viewportRef.current;
+    if (node && typeof viewport.scrollTo === 'function') viewport.scrollTo({ left: node.offsetLeft - viewport.clientWidth / 2 + node.offsetWidth / 2, top: node.offsetTop - viewport.clientHeight / 2 + node.offsetHeight / 2, behavior: 'smooth' });
+  }, [needle, active, hovered]);
   function moveMap(event) {
     if (event.pointerType !== 'mouse' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const section = event.currentTarget;
@@ -383,14 +399,21 @@ function TermMap() {
     </div>
     {needle && !status && <p className="map-count" role="status">{count ? `Showing relationships for ${(exact || matchedTerms[0]).name}` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
-      <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true" style={{ color: activeTerm ? categoryColor(categoryFor(activeTerm)) : undefined }}>{lines.map((line) => <line key={line.id} className={line.highlighted ? 'is-highlighted' : ''} style={{ color: line.color }} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
-        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} style={{ '--category-color': categoryColor(category) }} onPointerMove={moveMap} onPointerLeave={resetMapMotion}>
-          <h2>{category}<span>{entries.length}</span></h2>
-          <ul style={{ '--node-count': entries.length }}>{entries.map((term, index) => <li key={term._id} style={{ '--node-index': index }}><a data-term-id={term._id} className={[active && (term._id === active || connectedIds.has(String(term._id))) && 'is-connected'].filter(Boolean).join(' ')} onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
-            {term.name}<FiArrowUpRight aria-hidden="true" />
-          </a></li>)}</ul>
-        </section>)}
-        {!terms.length && <p>No terms available yet.</p>}
+      <div className="map-viewport" ref={viewportRef} tabIndex={0} aria-label="Scrollable term map">
+        <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} style={{ width: 2000, height: rowTop }} onPointerLeave={(event) => { setActive(null); resetMapMotion(event); }} onPointerMove={moveMap}>
+          <svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} className={line.highlighted ? 'is-highlighted' : ''} style={{ color: line.color }} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
+          {positions.map(({ category, entries, x, y, radius }) => <React.Fragment key={category}>
+            <div className="map-cluster-label" style={{ left: x, top: y - radius - 60, color: categoryColor(category) }}>{category}</div>
+            {entries.map((term, index) => {
+              const angle = index * 2.399963;
+              const distance = 70 + Math.sqrt(index) * 78;
+              return <a key={term._id} data-term-id={term._id} className={`map-node${active && (term._id === active || connectedIds.has(String(term._id))) ? ' is-connected' : ''}`}
+                style={{ left: x + Math.cos(angle) * distance, top: y + Math.sin(angle) * distance, '--category-color': categoryColor(category), '--float-delay': `${-index % 5}s` }}
+                onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>{term.name}</a>;
+            })}
+          </React.Fragment>)}
+          {!terms.length && <p>No terms available yet.</p>}
+        </div>
       </div>}
   </section>;
 }
