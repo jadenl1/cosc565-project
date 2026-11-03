@@ -161,5 +161,4 @@ input:focus-visible { outline: none; }
 @media (prefers-reduced-motion: reduce) { .map-category { background: var(--surface); } .map-category li { transform: none !important; } }
 
 .map-category h2 { color: var(--category-color); }
-.map-category h2::before { content: ""; width: 7px; height: 7px; flex-shrink: 0; align-self: center; border-radius: 50%; background: var(--category-color); box-shadow: 0 0 9px color-mix(in srgb, var(--category-color), transparent 45%); }
 .map-category h2 span { margin-left: auto; }
