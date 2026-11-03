@@ -172,3 +172,8 @@ input:focus-visible { outline: none; }
 }
 
 .term-map.has-active .map-category a.is-connected { border-color: var(--category-color); }
+.main-nav { gap: 8px; }
+.main-nav .bookmarks-link { min-height: 34px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); color: var(--text); transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease; }
+.main-nav .bookmarks-link svg { font-size: 14px; color: var(--muted); }
+.main-nav .bookmarks-link:hover, .main-nav .bookmarks-link[aria-current='page'] { border-color: var(--focus); background: var(--hover); color: var(--primary); }
+.main-nav .bookmarks-link:hover svg, .main-nav .bookmarks-link[aria-current='page'] svg { color: var(--primary); }
