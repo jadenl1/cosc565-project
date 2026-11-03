@@ -361,12 +361,17 @@ function TermMap() {
     const rect = section.getBoundingClientRect();
     section.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
     section.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`);
-
+    for (const node of section.querySelectorAll('[data-term-id]')) {
+      const box = node.getBoundingClientRect();
+      const distance = Math.hypot(box.left + box.width / 2 - event.clientX, box.top + box.height / 2 - event.clientY);
+      node.style.setProperty('--near', String(Math.max(0, 1 - distance / 125)));
+    }
   }
   function resetMapMotion(event) {
     const section = event.currentTarget;
     section.style.removeProperty('--pointer-x');
     section.style.removeProperty('--pointer-y');
+    section.querySelectorAll('[data-term-id]').forEach((node) => node.style.removeProperty('--near'));
   }
   return <section className="map-page">
     <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>

@@ -190,3 +190,15 @@ input:focus-visible { outline: none; }
 .term-map.has-active .map-connections line:not(.is-highlighted) { opacity: .035; }
 @media (min-width: 900px) { .map-category { margin-bottom: 14px; } }
 @media (prefers-reduced-motion: reduce) { .map-category { background: transparent; } }
+
+.term-map { background: #0e1117; }
+.map-category { padding: 22px 12px; }
+.map-category ul { align-items: center; gap: 12px; }
+.map-category a { width: 100px; height: 100px; justify-content: center; text-align: center; border-radius: 50%; padding: 12px; line-height: 1.25; transform: scale(calc(1 + var(--near, 0) * .13)); transition: transform 180ms ease, opacity 150ms ease, border-color 150ms ease; animation: node-float 5s ease-in-out infinite alternate; }
+.map-category li:nth-child(3n + 2) a { animation-delay: -1.7s; }
+.map-category li:nth-child(3n) a { animation-delay: -3.4s; }
+.map-category a::before, .map-category a svg { display: none; }
+.map-category a:hover, .map-category a:focus-visible { transform: scale(1.13); }
+.map-connections line:not(.is-highlighted) { opacity: .045; }
+@keyframes node-float { from { translate: 0 -3px; } to { translate: 0 3px; } }
+@media (prefers-reduced-motion: reduce) { .map-category a { animation: none; transform: none; } }
