@@ -300,6 +300,7 @@ function TermMap() {
   const [query, setQuery] = useState('');
   const [hovered, setActive] = useState(null);
   const [lines, setLines] = useState([]);
+  const [zoom, setZoom] = useState(1);
   const mapRef = useRef(null);
   const viewportRef = useRef(null);
   const [status, setStatus] = useState('Loading terms…');
@@ -343,7 +344,7 @@ function TermMap() {
     function updateLines() {
       const bounds = map.getBoundingClientRect();
       const nodes = new Map([...map.querySelectorAll('[data-term-id]')].map((node) => [node.dataset.termId, node]));
-      const center = (node) => { const rect = node.getBoundingClientRect(); return { x: rect.left + rect.width / 2 - bounds.left, y: rect.top + rect.height / 2 - bounds.top }; };
+      const center = (node) => { const rect = node.getBoundingClientRect(); return { x: (rect.left + rect.width / 2 - bounds.left) / zoom, y: (rect.top + rect.height / 2 - bounds.top) / zoom }; };
       const byId = new Map(terms.map((term) => [String(term._id), term]));
       const edges = [];
       const seen = new Set();
@@ -364,13 +365,13 @@ function TermMap() {
     updateLines();
     window.addEventListener('resize', updateLines);
     return () => { observer?.disconnect(); window.removeEventListener('resize', updateLines); };
-  }, [active, terms, query]);
+  }, [active, terms, query, zoom]);
   useEffect(() => {
     if (!needle || hovered || !active || !mapRef.current || !viewportRef.current) return;
     const node = [...mapRef.current.querySelectorAll('[data-term-id]')].find((element) => element.dataset.termId === active);
     const viewport = viewportRef.current;
-    if (node && typeof viewport.scrollTo === 'function') viewport.scrollTo({ left: node.offsetLeft - viewport.clientWidth / 2 + node.offsetWidth / 2, top: node.offsetTop - viewport.clientHeight / 2 + node.offsetHeight / 2, behavior: 'smooth' });
-  }, [needle, active, hovered]);
+    if (node && typeof viewport.scrollTo === 'function') viewport.scrollTo({ left: node.offsetLeft * zoom - viewport.clientWidth / 2, top: node.offsetTop * zoom - viewport.clientHeight / 2, behavior: 'smooth' });
+  }, [needle, active, hovered, zoom]);
   function moveMap(event) {
     if (event.pointerType !== 'mouse' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const section = event.currentTarget;
@@ -399,8 +400,15 @@ function TermMap() {
     </div>
     {needle && !status && <p className="map-count" role="status">{count ? `Showing relationships for ${(exact || matchedTerms[0]).name}` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
+      <div className="map-frame">
+        <div className="map-zoom" role="group" aria-label="Map zoom">
+          <button type="button" aria-label="Zoom out" disabled={zoom <= 0.5} onClick={() => setZoom((value) => Math.max(0.5, +(value - 0.1).toFixed(1)))}>−</button>
+          <button type="button" aria-label="Reset zoom" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
+          <button type="button" aria-label="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, +(value + 0.1).toFixed(1)))}>+</button>
+        </div>
       <div className="map-viewport" ref={viewportRef} tabIndex={0} aria-label="Scrollable term map">
-        <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} style={{ width: 2000, height: rowTop }} onPointerLeave={(event) => { setActive(null); resetMapMotion(event); }} onPointerMove={moveMap}>
+        <div className="map-scale-space" style={{ width: 2000 * zoom, height: rowTop * zoom }}>
+        <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} style={{ width: 2000, height: rowTop, transform: `scale(${zoom})`, transformOrigin: 'top left' }} onPointerLeave={(event) => { setActive(null); resetMapMotion(event); }} onPointerMove={moveMap}>
           <svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} className={line.highlighted ? 'is-highlighted' : ''} style={{ color: line.color }} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
           {positions.map(({ category, entries, x, y, radius }) => <React.Fragment key={category}>
             <div className="map-cluster-label" style={{ left: x, top: y - radius - 60, color: categoryColor(category) }}>{category}</div>
@@ -414,7 +422,8 @@ function TermMap() {
           </React.Fragment>)}
           {!terms.length && <p>No terms available yet.</p>}
         </div>
-      </div>}
+        </div>
+      </div></div>}
   </section>;
 }
 
