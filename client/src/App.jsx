@@ -319,24 +319,13 @@ function TermMap() {
     const rect = event.currentTarget.getBoundingClientRect();
     event.currentTarget.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
     event.currentTarget.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`);
-    for (const item of event.currentTarget.querySelectorAll('li')) {
-      const box = item.getBoundingClientRect();
-      const dx = box.left + box.width / 2 - event.clientX;
-      const dy = box.top + box.height / 2 - event.clientY;
-      const distance = Math.hypot(dx, dy);
-      const strength = Math.max(0, 1 - distance / 150) * 9;
-      item.style.setProperty('--drift-x', `${distance ? dx / distance * strength : 0}px`);
-      item.style.setProperty('--drift-y', `${distance ? dy / distance * strength : 0}px`);
-    }
+
   }
   function resetMapMotion(event) {
     const section = event.currentTarget;
     section.style.removeProperty('--pointer-x');
     section.style.removeProperty('--pointer-y');
-    section.querySelectorAll('li').forEach((item) => {
-      item.style.removeProperty('--drift-x');
-      item.style.removeProperty('--drift-y');
-    });
+
   }
   return <section className="map-page">
     <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
