@@ -97,7 +97,7 @@ input:focus-visible { outline: none; }
 .bookmarks-link { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
 .bookmarks-link:hover, .bookmarks-link[aria-current='page'] { color: var(--primary); }
 .bookmark-list { list-style: none; margin: 28px 0 0; padding: 0; }
-.bookmark-list > li { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.bookmark-list > li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); }
 .bookmark-list > li > div:first-child { min-width: 0; }
 .bookmark-list a { display: inline-flex; align-items: baseline; gap: 8px; color: var(--primary); overflow-wrap: anywhere; }
 .bookmark-list a svg { flex-shrink: 0; }
@@ -112,10 +112,17 @@ input:focus-visible { outline: none; }
 .bookmark-pagination span { color: var(--muted); font-size: 12px; }
 .bookmark-pagination button:disabled { cursor: default; opacity: .45; }
 
-.bookmark-remove { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; background: transparent; color: var(--muted); font-size: 12px; }
+.bookmark-remove { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; border: 0; border-radius: 4px; padding: 4px 9px; background: transparent; color: var(--muted); font-size: 12px; }
 .bookmark-remove:hover { color: var(--text); background: var(--surface); }
 .bookmark-toast { position: fixed; bottom: 24px; right: 24px; z-index: 10; display: flex; align-items: center; gap: 24px; overflow: hidden; padding: 14px 16px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: 0 8px 24px #0006; font-size: 13px; }
 .bookmark-toast button { border: 0; background: transparent; color: var(--primary); }
 .bookmark-timer { position: absolute; bottom: 0; left: 0; height: 3px; width: 100%; background: var(--primary); transform-origin: left; animation: bookmark-countdown 8s linear forwards; }
 @keyframes bookmark-countdown { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .bookmark-timer { animation: bookmark-countdown 8s linear forwards !important; } }
+
+.bookmark-toast { animation: toast-in 200ms ease-out both; }
+.bookmark-toast.is-closing { animation: toast-out 200ms ease-in both; }
+.bookmark-toast .toast-dismiss { display: grid; place-items: center; padding: 4px; color: var(--muted); }
+.bookmark-toast .toast-dismiss:hover { color: var(--text); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toast-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(10px); } }

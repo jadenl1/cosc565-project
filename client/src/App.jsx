@@ -174,8 +174,16 @@ function Bookmarks() {
   const [page, setPage] = useState(1);
   const [removed, setRemoved] = useState(null);
   const [removeError, setRemoveError] = useState('');
+  const [toastClosing, setToastClosing] = useState(false);
   const timer = useRef(null);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const exitTimer = useRef(null);
+  useEffect(() => () => { clearTimeout(timer.current); clearTimeout(exitTimer.current); }, []);
+  function dismissToast() {
+    clearTimeout(timer.current);
+    setToastClosing(true);
+    clearTimeout(exitTimer.current);
+    exitTimer.current = setTimeout(() => { setRemoved(null); setToastClosing(false); }, 200);
+  }
   function remove(term) {
     try {
       const ids = readBookmarks();
@@ -183,9 +191,11 @@ function Bookmarks() {
       if (index < 0) return;
       localStorage.setItem(bookmarkKey, JSON.stringify(ids.filter((id) => id !== term._id)));
       clearTimeout(timer.current);
+      clearTimeout(exitTimer.current);
+      setToastClosing(false);
       setRemoved({ id: term._id, index, token: Date.now() });
       setRemoveError('');
-      timer.current = setTimeout(() => setRemoved(null), 8000);
+      timer.current = setTimeout(dismissToast, 8000);
       setPage((value) => Math.min(value, Math.max(1, Math.ceil((filtered.length - 1) / 10))));
       window.dispatchEvent(new Event('bookmarks-changed'));
     } catch { setRemoveError('Could not remove bookmark.'); }
@@ -195,8 +205,7 @@ function Bookmarks() {
       const ids = readBookmarks();
       if (!ids.includes(removed.id)) ids.splice(Math.min(removed.index, ids.length), 0, removed.id);
       localStorage.setItem(bookmarkKey, JSON.stringify(ids));
-      clearTimeout(timer.current);
-      setRemoved(null);
+      dismissToast();
       setRemoveError('');
       window.dispatchEvent(new Event('bookmarks-changed'));
     } catch { setRemoveError('Could not restore bookmark.'); }
@@ -258,7 +267,7 @@ function Bookmarks() {
       <button className="bookmark-remove" aria-label={`Remove bookmark ${term.name}`} onClick={() => remove(term)}><FiX aria-hidden="true" /> Remove</button>
     </li>)}</ul>}
     {removeError && <p role="alert">{removeError}</p>}
-    {removed && <div className="bookmark-toast" role="status" key={removed.token}><span>Bookmark removed</span><button onClick={undo}>Undo</button><div className="bookmark-timer" aria-hidden="true" /></div>}
+    {removed && <div className={`bookmark-toast${toastClosing ? ' is-closing' : ''}`} role="status" key={removed.token}><span>Bookmark removed</span><button onClick={undo} disabled={toastClosing}>Undo</button><button className="toast-dismiss" onClick={dismissToast} aria-label="Dismiss notification"><FiX aria-hidden="true" /></button><div className="bookmark-timer" aria-hidden="true" /></div>}
     {pageCount > 1 && <nav className="bookmark-pagination" aria-label="Bookmark pages">
       <button className="retry" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button>
       <span aria-live="polite">Page {page} of {pageCount}</span>
