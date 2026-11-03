@@ -233,3 +233,12 @@ main:has(.map-page) { height: 100svh; display: flex; flex-direction: column; pad
 .map-zoom button:disabled { opacity: .4; cursor: default; }
 .map-scale-space { position: relative; overflow: hidden; }
 @media (max-width: 600px) { main:has(.map-page) { padding: 16px; } .map-page { margin-top: 16px; } }
+
+main:has(.map-page) { height: 100svh; padding: 0; }
+main:has(.map-page) .site-header { flex: 0 0 auto; min-height: 64px; padding: 12px 30px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.map-page { position: relative; flex: 1; width: 100%; margin: 0; }
+.map-page .map-search { position: absolute; z-index: 5; top: 12px; left: 12px; width: min(340px, calc(100% - 180px)); margin: 0; }
+.map-page .map-count { position: absolute; z-index: 5; top: 58px; left: 12px; max-width: min(340px, calc(100% - 24px)); margin: 0; padding: 4px 8px; border-radius: 4px; background: var(--surface); }
+.map-frame { min-height: 0; }
+.map-viewport { border: 0; border-radius: 0; }
+@media (max-width: 600px) { main:has(.map-page) { padding: 0; } main:has(.map-page) .site-header { padding: 10px 16px; } .map-page { margin: 0; } }

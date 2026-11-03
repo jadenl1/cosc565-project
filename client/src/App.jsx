@@ -391,9 +391,7 @@ function TermMap() {
     section.querySelectorAll('[data-term-id]').forEach((node) => node.style.removeProperty('--near'));
   }
   return <section className="map-page">
-    <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
-    <h1>Explore the map</h1>
-    <p className="map-caption">Explore the network. Hover or focus a term to see its connections.</p>
+    <h1 className="sr-only">Explore the map</h1>
     <div className="search-box map-search"><FiSearch className="search-icon" aria-hidden="true" />
       <label className="sr-only" htmlFor="map-search">Search the map</label>
       <input id="map-search" type="search" placeholder="Find a term…" value={query} onChange={(event) => setQuery(event.target.value)} />
