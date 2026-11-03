@@ -373,15 +373,15 @@ function TermMap() {
     setMenu({ term, left: Math.max(8, Math.min(x + 8, window.innerWidth - 160)), top: Math.max(8, Math.min(y + 8, window.innerHeight - 60)) });
   }
   useEffect(() => {
-    if (!menu) return;
+    if (!menu && !focusId) return;
     function dismiss(event) {
-      if (!event.target.closest('.node-menu, [data-term-id], .focus-node')) setMenu(null);
+      if (!event.target.closest('.node-menu, [data-term-id], .focus-node')) { setMenu(null); if (focusId) exitFocus(); }
     }
     function escape(event) { if (event.key === 'Escape') setMenu(null); }
     document.addEventListener('pointerdown', dismiss);
     document.addEventListener('keydown', escape);
     return () => { document.removeEventListener('pointerdown', dismiss); document.removeEventListener('keydown', escape); };
-  }, [menu]);
+  }, [menu, focusId]);
   function exitFocus() { setMenu(null); setFocusId(null); setActive(null); }
   useEffect(() => {
     if (!focusId || !viewportRef.current || !mapRef.current) return;
@@ -457,7 +457,6 @@ function TermMap() {
     {needle && !status && <p className="map-count" role="status">{count ? `Showing relationships for ${(exact || matchedTerms[0]).name}` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
       <div className="map-frame">
-        {focusTerm && <button className="focus-exit map-focus-exit" onClick={exitFocus}><FiX aria-hidden="true" /> Exit focus</button>}
         {menu && <div className="node-menu" style={{ left: menu.left, top: menu.top }} role="group" aria-label={`Options for ${menu.term.name}`}>
           <button onClick={() => { setActive(null); setFocusId(menu.term._id); setMenu(null); }}>Focus</button>
           <a href={`#/terms/${encodeURIComponent(menu.term._id)}`}>Visit</a>
