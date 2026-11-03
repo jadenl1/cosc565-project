@@ -391,14 +391,17 @@ function TermMap() {
     for (const node of section.querySelectorAll('[data-term-id]')) {
       const box = node.getBoundingClientRect();
       const distance = Math.hypot(box.left + box.width / 2 - event.clientX, box.top + box.height / 2 - event.clientY);
-      node.style.setProperty('--near', String(Math.max(0, 1 - distance / 200)));
+      const near = Math.max(0, 1 - distance / 200);
+      node.style.setProperty('--near', String(near));
+      node.style.setProperty('--pull-x', `${distance ? (event.clientX - box.left - box.width / 2) / distance * near * 12 / zoom : 0}px`);
+      node.style.setProperty('--pull-y', `${distance ? (event.clientY - box.top - box.height / 2) / distance * near * 12 / zoom : 0}px`);
     }
   }
   function resetMapMotion(event) {
     const section = event.currentTarget;
     section.style.removeProperty('--pointer-x');
     section.style.removeProperty('--pointer-y');
-    section.querySelectorAll('[data-term-id]').forEach((node) => node.style.removeProperty('--near'));
+    section.querySelectorAll('[data-term-id]').forEach((node) => { node.style.removeProperty('--near'); node.style.removeProperty('--pull-x'); node.style.removeProperty('--pull-y'); });
   }
   return <section className="map-page">
     <h1 className="sr-only">Explore the map</h1>
