@@ -265,3 +265,6 @@ main:has(.map-page) .site-header { flex: 0 0 auto; min-height: 64px; padding: 12
 @keyframes focus-exit { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.98); } }
 .map-viewport, .focus-view { scrollbar-width: none; }
 .map-viewport::-webkit-scrollbar, .focus-view::-webkit-scrollbar { display: none; }
+
+.focus-stem, .focus-children::before, .focus-child::before, .focus-root span, .focus-child span { animation: focus-details-in 300ms ease-out 500ms both; }
+@keyframes focus-details-in { from { opacity: 0; } to { opacity: 1; } }

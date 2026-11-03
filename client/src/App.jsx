@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiExternalLink, FiX, FiCompass, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
 
 async function searchTerms(query, signal) {
@@ -305,6 +305,8 @@ function TermMap() {
   const [menu, setMenu] = useState(null);
   const [focusClosing, setFocusClosing] = useState(false);
   const focusTimer = useRef(null);
+  const focusViewRef = useRef(null);
+  const focusOrigins = useRef(new Map());
   useEffect(() => () => clearTimeout(focusTimer.current), []);
   const mapRef = useRef(null);
   const viewportRef = useRef(null);
@@ -368,6 +370,34 @@ function TermMap() {
     const rect = event.currentTarget.getBoundingClientRect();
     setMenu({ term, left: Math.max(8, Math.min(rect.left, window.innerWidth - 160)), top: Math.max(8, Math.min(rect.bottom + 8, window.innerHeight - 100)) });
   }
+  function focus(term) {
+    const origins = new Map();
+    const source = focusId ? focusViewRef.current : mapRef.current;
+    source?.querySelectorAll('[data-focus-id], [data-term-id]').forEach((node) => {
+      const rect = node.getBoundingClientRect();
+      origins.set(node.dataset.focusId || node.dataset.termId, rect);
+    });
+    focusOrigins.current = origins;
+    clearTimeout(focusTimer.current);
+    setFocusClosing(false);
+    setFocusId(term._id);
+    setMenu(null);
+  }
+  useLayoutEffect(() => {
+    if (!focusId || !focusViewRef.current || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const originFallback = focusOrigins.current.get(focusId);
+    focusViewRef.current.querySelectorAll('[data-focus-id]').forEach((node, index) => {
+      const from = focusOrigins.current.get(node.dataset.focusId) || originFallback;
+      if (!from || !node.animate) return;
+      const to = node.getBoundingClientRect();
+      const dx = from.left + from.width / 2 - to.left - to.width / 2;
+      const dy = from.top + from.height / 2 - to.top - to.height / 2;
+      node.animate([
+        { transform: `translate(${dx}px, ${dy}px) scale(${Math.max(.2, from.width / to.width)})`, opacity: .55 },
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+      ], { duration: 600, delay: Math.min(index * 35, 180), easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' });
+    });
+  }, [focusId]);
   function exitFocus() {
     setMenu(null);
     setFocusClosing(true);
@@ -438,17 +468,17 @@ function TermMap() {
     {needle && !status && <p className="map-count" role="status">{count ? `Showing relationships for ${(exact || matchedTerms[0]).name}` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
       <div className="map-frame">
-        {focusTerm && <div className={`focus-view${focusClosing ? ' is-closing' : ''}`} key={focusId}>
+        {focusTerm && <div ref={focusViewRef} className={`focus-view${focusClosing ? ' is-closing' : ''}`} key={focusId}>
           <button className="focus-exit" onClick={exitFocus}><FiX aria-hidden="true" /> Exit focus</button>
           <div className="focus-tree">
-            <div className="focus-root"><button className="focus-node" style={{ '--category-color': categoryColor(categoryFor(focusTerm)) }} onClick={(event) => openMenu(event, focusTerm)}>{focusTerm.name}</button><span>{categoryFor(focusTerm)}</span></div>
+            <div className="focus-root"><button data-focus-id={focusTerm._id} className="focus-node" style={{ '--category-color': categoryColor(categoryFor(focusTerm)) }} onClick={(event) => openMenu(event, focusTerm)}>{focusTerm.name}</button><span>{categoryFor(focusTerm)}</span></div>
             {focusChildren.length ? <><div className="focus-stem" /><div className="focus-children">{focusChildren.map((child) => <div className="focus-child" key={child._id}>
-              <button className="focus-node" style={{ '--category-color': categoryColor(categoryFor(child)) }} onClick={(event) => openMenu(event, child)}>{child.name}</button><span>{categoryFor(child)}</span>
+              <button data-focus-id={child._id} className="focus-node" style={{ '--category-color': categoryColor(categoryFor(child)) }} onClick={(event) => openMenu(event, child)}>{child.name}</button><span>{categoryFor(child)}</span>
             </div>)}</div></> : <p className="focus-empty">No related terms yet.</p>}
           </div>
         </div>}
         {menu && <div className="node-menu" style={{ left: menu.left, top: menu.top }} role="group" aria-label={`Options for ${menu.term.name}`}>
-          <button onClick={() => { clearTimeout(focusTimer.current); setFocusClosing(false); setFocusId(menu.term._id); setMenu(null); }}>Focus</button>
+          <button onClick={() => focus(menu.term)}>Focus</button>
           <a href={`#/terms/${encodeURIComponent(menu.term._id)}`}>Visit</a>
           <button className="node-menu-close" aria-label="Close options" onClick={() => setMenu(null)}><FiX aria-hidden="true" /></button>
         </div>}
