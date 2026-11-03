@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiExternalLink, FiX, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiExternalLink, FiX, FiCompass, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
 
 async function searchTerms(query, signal) {
   const response = await fetch(`/api/terms?${new URLSearchParams({ q: query, suggest: true })}`, { signal });
@@ -475,7 +475,7 @@ export default function App() {
     <main ref={page}>
       <header className="site-header">
         <a className="brand-mark" href="#/" aria-label="Buzzword Techtionary home">[b]</a>
-        <nav className="main-nav" aria-label="Main navigation"><a className="bookmarks-link" href="#/map" aria-current={route === '#/map' ? 'page' : undefined}>Explore</a><a className="bookmarks-link" href="#/bookmarks" aria-current={route === '#/bookmarks' ? 'page' : undefined}><FiBookmark aria-hidden="true" /> Bookmarks</a></nav>
+        <nav className="main-nav" aria-label="Main navigation"><a className="bookmarks-link" href="#/map" aria-current={route === '#/map' ? 'page' : undefined}><FiCompass aria-hidden="true" /> Explore</a><a className="bookmarks-link" href="#/bookmarks" aria-current={route === '#/bookmarks' ? 'page' : undefined}><FiBookmark aria-hidden="true" /> Bookmarks</a></nav>
       </header>
       {match ? <Definition key={match[1]} id={match[1]} /> : route === '#/bookmarks' ? <Bookmarks /> : route === '#/map' ? <TermMap /> : <Search onChoose={openDefinition} />}
     </main>
