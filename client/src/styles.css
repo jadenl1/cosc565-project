@@ -111,3 +111,11 @@ input:focus-visible { outline: none; }
 .bookmark-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 22px; }
 .bookmark-pagination span { color: var(--muted); font-size: 12px; }
 .bookmark-pagination button:disabled { cursor: default; opacity: .45; }
+
+.bookmark-remove { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; background: transparent; color: var(--muted); font-size: 12px; }
+.bookmark-remove:hover { color: var(--text); background: var(--surface); }
+.bookmark-toast { position: fixed; bottom: 24px; right: 24px; z-index: 10; display: flex; align-items: center; gap: 24px; overflow: hidden; padding: 14px 16px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: 0 8px 24px #0006; font-size: 13px; }
+.bookmark-toast button { border: 0; background: transparent; color: var(--primary); }
+.bookmark-timer { position: absolute; bottom: 0; left: 0; height: 3px; width: 100%; background: var(--primary); transform-origin: left; animation: bookmark-countdown 8s linear forwards; }
+@keyframes bookmark-countdown { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .bookmark-timer { animation: bookmark-countdown 8s linear forwards !important; } }

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiExternalLink, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowUpRight, FiBookOpen, FiBookmark, FiLink, FiExternalLink, FiX, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
 
 async function searchTerms(query, signal) {
   const response = await fetch(`/api/terms?${new URLSearchParams({ q: query, suggest: true })}`, { signal });
@@ -172,6 +172,35 @@ function Bookmarks() {
   const [revision, setRevision] = useState(0);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [removed, setRemoved] = useState(null);
+  const [removeError, setRemoveError] = useState('');
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  function remove(term) {
+    try {
+      const ids = readBookmarks();
+      const index = ids.indexOf(term._id);
+      if (index < 0) return;
+      localStorage.setItem(bookmarkKey, JSON.stringify(ids.filter((id) => id !== term._id)));
+      clearTimeout(timer.current);
+      setRemoved({ id: term._id, index, token: Date.now() });
+      setRemoveError('');
+      timer.current = setTimeout(() => setRemoved(null), 8000);
+      setPage((value) => Math.min(value, Math.max(1, Math.ceil((filtered.length - 1) / 10))));
+      window.dispatchEvent(new Event('bookmarks-changed'));
+    } catch { setRemoveError('Could not remove bookmark.'); }
+  }
+  function undo() {
+    try {
+      const ids = readBookmarks();
+      if (!ids.includes(removed.id)) ids.splice(Math.min(removed.index, ids.length), 0, removed.id);
+      localStorage.setItem(bookmarkKey, JSON.stringify(ids));
+      clearTimeout(timer.current);
+      setRemoved(null);
+      setRemoveError('');
+      window.dispatchEvent(new Event('bookmarks-changed'));
+    } catch { setRemoveError('Could not restore bookmark.'); }
+  }
   const heading = useRef(null);
   useEffect(() => {
     heading.current?.focus();
@@ -213,7 +242,6 @@ function Bookmarks() {
   return <section className="definition-page bookmarks-page">
     <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
     <h1 ref={heading} tabIndex={-1}>Bookmarks</h1>
-    <p className="empty-detail">Saved in this browser.</p>
     {!message && entries.length > 0 && <form className="bookmark-search" onSubmit={(event) => event.preventDefault()}>
       <label className="sr-only" htmlFor="bookmark-search">Search bookmarks</label>
       <FiSearch aria-hidden="true" />
@@ -227,8 +255,10 @@ function Bookmarks() {
         <a href={`#/terms/${encodeURIComponent(term._id)}`}>{term.name}<FiArrowUpRight aria-hidden="true" /></a>
         <p>{term.definition}</p>
       </>}{term.retryable && <button className="retry" onClick={() => setRevision((value) => value + 1)}>Retry</button>}</div>
-      <Bookmark id={term._id} />
+      <button className="bookmark-remove" aria-label={`Remove bookmark ${term.name}`} onClick={() => remove(term)}><FiX aria-hidden="true" /> Remove</button>
     </li>)}</ul>}
+    {removeError && <p role="alert">{removeError}</p>}
+    {removed && <div className="bookmark-toast" role="status" key={removed.token}><span>Bookmark removed</span><button onClick={undo}>Undo</button><div className="bookmark-timer" aria-hidden="true" /></div>}
     {pageCount > 1 && <nav className="bookmark-pagination" aria-label="Bookmark pages">
       <button className="retry" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button>
       <span aria-live="polite">Page {page} of {pageCount}</span>
