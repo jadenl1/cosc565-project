@@ -172,3 +172,5 @@ input:focus-visible { outline: none; }
   .term-map { display: block; columns: 3; column-gap: 12px; }
   .map-category { display: inline-block; width: 100%; margin-bottom: 12px; break-inside: avoid; vertical-align: top; }
 }
+
+.term-map.has-active .map-category a.is-connected { border-color: var(--category-color); }
