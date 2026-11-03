@@ -350,7 +350,7 @@ function TermMap() {
       <div ref={mapRef} className={`term-map${needle ? ' is-searching' : ''}${active ? ' has-active' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
         {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category}>
           <h2>{category}<span>{entries.length}</span></h2>
-          <ul>{entries.map((term) => <li key={term._id}><a data-term-id={term._id} className={[matches(term) && 'is-match', active && (term._id === active || connectedIds.has(String(term._id))) && 'is-connected'].filter(Boolean).join(' ')} onPointerEnter={() => setActive(term._id)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
+          <ul>{entries.map((term) => <li key={term._id}><a data-term-id={term._id} className={[matches(term) && 'is-match', active && (term._id === active || connectedIds.has(String(term._id))) && 'is-connected'].filter(Boolean).join(' ')} onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
             {term.name}<FiArrowUpRight aria-hidden="true" />
           </a></li>)}</ul>
         </section>)}
