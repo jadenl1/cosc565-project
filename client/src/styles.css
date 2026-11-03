@@ -143,3 +143,8 @@ input:focus-visible { outline: none; }
 .map-category a.is-match { color: #e2edff; border-color: var(--primary); background: #263b58; }
 .map-category svg { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) { .map-category { background: var(--surface); } }
+
+.map-category { transition: border-color 220ms ease, box-shadow 220ms ease; }
+.map-category:hover { border-color: #536d91; box-shadow: 0 0 28px #5686c019, inset 0 0 30px #669ed70a; }
+.map-category li { transform: translate(var(--drift-x, 0), var(--drift-y, 0)); transition: transform 240ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .map-category li { transform: none !important; } }

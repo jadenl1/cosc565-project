@@ -319,6 +319,24 @@ function TermMap() {
     const rect = event.currentTarget.getBoundingClientRect();
     event.currentTarget.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
     event.currentTarget.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`);
+    for (const item of event.currentTarget.querySelectorAll('li')) {
+      const box = item.getBoundingClientRect();
+      const dx = box.left + box.width / 2 - event.clientX;
+      const dy = box.top + box.height / 2 - event.clientY;
+      const distance = Math.hypot(dx, dy);
+      const strength = Math.max(0, 1 - distance / 150) * 9;
+      item.style.setProperty('--drift-x', `${distance ? dx / distance * strength : 0}px`);
+      item.style.setProperty('--drift-y', `${distance ? dy / distance * strength : 0}px`);
+    }
+  }
+  function resetMapMotion(event) {
+    const section = event.currentTarget;
+    section.style.removeProperty('--pointer-x');
+    section.style.removeProperty('--pointer-y');
+    section.querySelectorAll('li').forEach((item) => {
+      item.style.removeProperty('--drift-x');
+      item.style.removeProperty('--drift-y');
+    });
   }
   return <section className="map-page">
     <a className="back-link" href="#/"><FiArrowLeft aria-hidden="true" /> Back to search</a>
@@ -331,7 +349,7 @@ function TermMap() {
     {needle && !status && <p className="map-count" role="status">{count ? `${count} matching ${count === 1 ? 'term' : 'terms'} highlighted` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
       <div className={`term-map${needle ? ' is-searching' : ''}`}>
-        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} onPointerMove={move} onPointerLeave={(event) => { event.currentTarget.style.removeProperty('--pointer-x'); event.currentTarget.style.removeProperty('--pointer-y'); }}>
+        {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} onPointerMove={move} onPointerLeave={resetMapMotion}>
           <h2>{category}<span>{entries.length}</span></h2>
           <ul>{entries.map((term) => <li key={term._id}><a className={matches(term) ? 'is-match' : ''} href={`#/terms/${encodeURIComponent(term._id)}`}>
             {term.name}<FiArrowUpRight aria-hidden="true" />
