@@ -164,3 +164,7 @@ input:focus-visible { outline: none; }
 .map-category { background: radial-gradient(280px circle at var(--pointer-x, -1000px) var(--pointer-y, -1000px), color-mix(in srgb, var(--category-color) 20%, var(--surface)), transparent), var(--surface); }
 .map-category a:hover, .map-category a:focus-visible { color: var(--category-color); border-color: var(--category-color); box-shadow: 0 0 18px color-mix(in srgb, var(--category-color) 50%, transparent); }
 @media (prefers-reduced-motion: reduce) { .map-category { background: var(--surface); } }
+.map-category { border-color: transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, radial-gradient(180px circle at var(--pointer-x, -1000px) var(--pointer-y, -1000px), var(--category-color), var(--line) 85%) border-box; }
+.map-category::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(280px circle at var(--pointer-x, -1000px) var(--pointer-y, -1000px), color-mix(in srgb, var(--category-color) 20%, transparent), transparent); }
+.map-category h2, .map-category ul { position: relative; }
+@media (prefers-reduced-motion: reduce) { .map-category { border-color: var(--line); background: var(--surface); } .map-category::before { display: none; } }
