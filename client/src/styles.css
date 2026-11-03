@@ -162,3 +162,6 @@ input:focus-visible { outline: none; }
 
 .map-category h2 { color: var(--category-color); }
 .map-category h2 span { margin-left: auto; }
+.map-category { background: radial-gradient(280px circle at var(--pointer-x, -1000px) var(--pointer-y, -1000px), color-mix(in srgb, var(--category-color) 20%, var(--surface)), transparent), var(--surface); }
+.map-category a:hover, .map-category a:focus-visible { color: var(--category-color); border-color: var(--category-color); box-shadow: 0 0 18px color-mix(in srgb, var(--category-color) 50%, transparent); }
+@media (prefers-reduced-motion: reduce) { .map-category { background: var(--surface); } }
