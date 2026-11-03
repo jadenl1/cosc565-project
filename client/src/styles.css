@@ -281,3 +281,10 @@ main:has(.map-page) .site-header { flex: 0 0 auto; min-height: 64px; padding: 12
 .focus-children::before, .focus-child::before { display: none; }
 .focus-child { gap: 9px; }
 @media (max-width: 600px) { .focus-tree { padding: 84px 20px 60px; } .focus-root .focus-node { width: 140px; height: 140px; } .focus-children { grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); } .focus-node { width: 100px; height: 100px; } }
+
+.map-focus-exit { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); margin: 0; z-index: 5; }
+.map-node { transition: left 650ms cubic-bezier(.2,.8,.2,1), top 650ms cubic-bezier(.2,.8,.2,1), transform 180ms, opacity 220ms; }
+.term-map.is-focused .map-node:not(.focus-visible) { opacity: .07; pointer-events: none; }
+.term-map.is-focused .map-node.focus-visible { opacity: 1; }
+.term-map.is-focused .map-cluster-label { opacity: .12; }
+@media (prefers-reduced-motion: reduce) { .map-node { transition: none; } }

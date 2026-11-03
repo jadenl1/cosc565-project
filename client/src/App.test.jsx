@@ -252,9 +252,9 @@ test('focus mode opens a related term tree and can focus a child or exit', async
   await user.click(screen.getByRole('link', { name: 'Explore' }));
   await user.click(await screen.findByRole('link', { name: term.name }));
   await user.click(screen.getByRole('button', { name: 'Focus' }));
-  await user.click(screen.getByRole('button', { name: second.name }));
+  await user.click(screen.getByRole('link', { name: second.name }));
   await user.click(screen.getByRole('button', { name: 'Focus' }));
-  expect(screen.getByText('No related terms yet.')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Exit focus' })).toBeTruthy();
   await user.click(screen.getByRole('button', { name: 'Exit focus' }));
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Exit focus' })).toBeNull());
 });

@@ -303,9 +303,6 @@ function TermMap() {
   const [zoom, setZoom] = useState(0.6);
   const [focusId, setFocusId] = useState(null);
   const [menu, setMenu] = useState(null);
-  const [focusClosing, setFocusClosing] = useState(false);
-  const focusTimer = useRef(null);
-  useEffect(() => () => clearTimeout(focusTimer.current), []);
   const mapRef = useRef(null);
   const viewportRef = useRef(null);
   const [status, setStatus] = useState('Loading terms…');
@@ -330,7 +327,7 @@ function TermMap() {
   }
   const matchedTerms = terms.filter(matches);
   const exact = matchedTerms.find((term) => [term.name, ...(term.aliases || [])].some((value) => value.toLowerCase() === needle));
-  const active = menu?.term._id || hovered || (needle ? (exact || matchedTerms[0])?._id : null);
+  const active = menu?.term._id || hovered || focusId || (needle ? (exact || matchedTerms[0])?._id : null);
   const clusters = [...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b));
   const positions = [];
   for (const [category, entries] of clusters) {
@@ -363,6 +360,11 @@ function TermMap() {
   const connectedIds = new Set((activeTerm?.relatedTerms || []).map(String));
   const focusTerm = terms.find((term) => term._id === focusId);
   const focusChildren = (focusTerm?.relatedTerms || []).map((id) => terms.find((term) => term._id === String(id))).filter(Boolean);
+  const focusNeighbors = new Set(focusChildren.map((term) => String(term._id)));
+  let focusPoint = null;
+  for (const cluster of positions) cluster.entries.forEach((term, index) => {
+    if (term._id === focusId) { const distance = 70 + Math.sqrt(index) * 78; focusPoint = { x: cluster.x + Math.cos(index * 2.399963) * distance, y: cluster.y + Math.sin(index * 2.399963) * distance }; }
+  });
   function openMenu(event, term) {
     event.preventDefault();
     const rect = event.currentTarget.getBoundingClientRect();
@@ -380,12 +382,13 @@ function TermMap() {
     document.addEventListener('keydown', escape);
     return () => { document.removeEventListener('pointerdown', dismiss); document.removeEventListener('keydown', escape); };
   }, [menu]);
-  function exitFocus() {
-    setMenu(null);
-    setFocusClosing(true);
-    clearTimeout(focusTimer.current);
-    focusTimer.current = setTimeout(() => { setFocusId(null); setFocusClosing(false); }, 220);
-  }
+  function exitFocus() { setMenu(null); setFocusId(null); setActive(null); }
+  useEffect(() => {
+    if (!focusId || !viewportRef.current || !mapRef.current) return;
+    const node = [...mapRef.current.querySelectorAll('[data-term-id]')].find((item) => item.dataset.termId === focusId);
+    const viewport = viewportRef.current;
+    if (node && typeof viewport.scrollTo === 'function') viewport.scrollTo({ left: node.offsetLeft * zoom - viewport.clientWidth / 2, top: node.offsetTop * zoom - viewport.clientHeight / 2, behavior: 'smooth' });
+  }, [focusId, zoom]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -410,10 +413,14 @@ function TermMap() {
     }
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateLines);
     observer?.observe(map);
+    let frame;
+    const started = performance.now();
+    function animateLines(now) { updateLines(); if (now - started < 800) frame = requestAnimationFrame(animateLines); }
     updateLines();
+    frame = requestAnimationFrame(animateLines);
     window.addEventListener('resize', updateLines);
-    return () => { observer?.disconnect(); window.removeEventListener('resize', updateLines); };
-  }, [active, terms, query, zoom]);
+    return () => { cancelAnimationFrame(frame); observer?.disconnect(); window.removeEventListener('resize', updateLines); };
+  }, [active, terms, query, zoom, focusId]);
   useEffect(() => {
     if (!needle || hovered || !active || !mapRef.current || !viewportRef.current) return;
     const node = [...mapRef.current.querySelectorAll('[data-term-id]')].find((element) => element.dataset.termId === active);
@@ -421,7 +428,7 @@ function TermMap() {
     if (node && typeof viewport.scrollTo === 'function') viewport.scrollTo({ left: node.offsetLeft * zoom - viewport.clientWidth / 2, top: node.offsetTop * zoom - viewport.clientHeight / 2, behavior: 'smooth' });
   }, [needle, active, hovered, zoom]);
   function moveMap(event) {
-    if (event.pointerType !== 'mouse' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    if (focusId || event.pointerType !== 'mouse' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const section = event.currentTarget;
     const rect = section.getBoundingClientRect();
     section.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
@@ -450,18 +457,9 @@ function TermMap() {
     {needle && !status && <p className="map-count" role="status">{count ? `Showing relationships for ${(exact || matchedTerms[0]).name}` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
       <div className="map-frame">
-        {focusTerm && <div className={`focus-view${focusClosing ? ' is-closing' : ''}`} key={focusId}>
-          <button className="focus-exit" onClick={exitFocus}><FiX aria-hidden="true" /> Exit focus</button>
-          <div className="focus-tree">
-            <p className="focus-kicker">FOCUS</p>
-            <div className="focus-root"><button className="focus-node" style={{ '--category-color': categoryColor(categoryFor(focusTerm)) }} onClick={(event) => openMenu(event, focusTerm)}>{focusTerm.name}</button><span>{categoryFor(focusTerm)}</span></div>
-            {focusChildren.length ? <><div className="focus-stem" /><div className="focus-related-heading"><span>RELATED TERMS</span><span>{focusChildren.length}</span></div><div className="focus-children">{focusChildren.map((child) => <div className="focus-child" key={child._id}>
-              <button className="focus-node" style={{ '--category-color': categoryColor(categoryFor(child)) }} onClick={(event) => openMenu(event, child)}>{child.name}</button><span>{categoryFor(child)}</span>
-            </div>)}</div></> : <p className="focus-empty">No related terms yet.</p>}
-          </div>
-        </div>}
+        {focusTerm && <button className="focus-exit map-focus-exit" onClick={exitFocus}><FiX aria-hidden="true" /> Exit focus</button>}
         {menu && <div className="node-menu" style={{ left: menu.left, top: menu.top }} role="group" aria-label={`Options for ${menu.term.name}`}>
-          <button onClick={() => { clearTimeout(focusTimer.current); setFocusClosing(false); setFocusId(menu.term._id); setMenu(null); }}>Focus</button>
+          <button onClick={() => { setActive(null); setFocusId(menu.term._id); setMenu(null); }}>Focus</button>
           <a href={`#/terms/${encodeURIComponent(menu.term._id)}`}>Visit</a>
           <button className="node-menu-close" aria-label="Close options" onClick={() => setMenu(null)}><FiX aria-hidden="true" /></button>
         </div>}
@@ -472,15 +470,22 @@ function TermMap() {
         </div>
       <div className="map-viewport" ref={viewportRef} tabIndex={0} aria-label="Scrollable term map">
         <div className="map-scale-space" style={{ width: mapWidth * zoom, height: mapHeight * zoom }}>
-        <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} style={{ width: mapWidth, height: mapHeight, transform: `scale(${zoom})`, transformOrigin: 'top left' }} onPointerLeave={(event) => { setActive(null); resetMapMotion(event); }} onPointerMove={moveMap}>
+        <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}${focusId ? ' is-focused' : ''}`} style={{ width: mapWidth, height: mapHeight, transform: `scale(${zoom})`, transformOrigin: 'top left' }} onPointerLeave={(event) => { setActive(null); resetMapMotion(event); }} onPointerMove={moveMap}>
           <svg className="map-connections" aria-hidden="true">{lines.map((line) => <line key={line.id} className={line.highlighted ? 'is-highlighted' : ''} style={{ color: line.color }} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
           {positions.map(({ category, entries, x, y, radius }) => <React.Fragment key={category}>
             <div className="map-cluster-label" style={{ left: x, top: y - radius - 60, color: categoryColor(category) }}>{category}</div>
             {entries.map((term, index) => {
               const angle = index * 2.399963;
               const distance = 70 + Math.sqrt(index) * 78;
-              return <a key={term._id} data-term-id={term._id} className={`map-node${active && (term._id === active || connectedIds.has(String(term._id))) ? ' is-connected' : ''}`}
-                style={{ left: x + Math.cos(angle) * distance, top: y + Math.sin(angle) * distance, '--category-color': categoryColor(category), '--float-delay': `${-index % 5}s` }}
+              const neighborIndex = focusChildren.findIndex((child) => child._id === term._id);
+              const ring = Math.floor(neighborIndex / 8);
+              const ringStart = ring * 8;
+              const ringCount = Math.min(8, focusChildren.length - ringStart);
+              const neighborAngle = ringCount ? (neighborIndex - ringStart) * Math.PI * 2 / ringCount - Math.PI / 2 : 0;
+              const nodeX = focusPoint && neighborIndex >= 0 ? focusPoint.x + Math.cos(neighborAngle) * (220 + ring * 165) : x + Math.cos(angle) * distance;
+              const nodeY = focusPoint && neighborIndex >= 0 ? focusPoint.y + Math.sin(neighborAngle) * (220 + ring * 165) : y + Math.sin(angle) * distance;
+              return <a key={term._id} data-term-id={term._id} className={`map-node${active && (term._id === active || connectedIds.has(String(term._id))) ? ' is-connected' : ''}${focusId && (term._id === focusId || focusNeighbors.has(String(term._id))) ? ' focus-visible' : ''}`}
+                style={{ left: nodeX, top: nodeY, '--category-color': categoryColor(category), '--float-delay': `${-index % 5}s` }}
                 onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} onClick={(event) => openMenu(event, term)} href={`#/terms/${encodeURIComponent(term._id)}`}>{term.name}</a>;
             })}
           </React.Fragment>)}
