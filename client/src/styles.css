@@ -202,3 +202,11 @@ input:focus-visible { outline: none; }
 .map-connections line:not(.is-highlighted) { opacity: .045; }
 @keyframes node-float { from { translate: 0 -3px; } to { translate: 0 3px; } }
 @media (prefers-reduced-motion: reduce) { .map-category a { animation: none; transform: none; } }
+
+/* Arrange each category as a loose cluster rather than a list. */
+.map-category ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; align-items: center; justify-items: center; padding: 12px 0 24px; }
+.map-category li { position: relative; margin-top: calc((var(--node-index) - (var(--node-index) / 2)) * 0px); }
+.map-category li:nth-child(6n + 2), .map-category li:nth-child(6n + 5) { transform: translateY(17px); }
+.map-category li:nth-child(6n + 3) { transform: translateY(-5px); }
+.map-category a { width: clamp(72px, 7vw, 96px); height: clamp(72px, 7vw, 96px); font-size: 11px; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .map-category a { width: 85px; height: 85px; } }
