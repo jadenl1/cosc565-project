@@ -453,8 +453,9 @@ function TermMap() {
         {focusTerm && <div className={`focus-view${focusClosing ? ' is-closing' : ''}`} key={focusId}>
           <button className="focus-exit" onClick={exitFocus}><FiX aria-hidden="true" /> Exit focus</button>
           <div className="focus-tree">
+            <p className="focus-kicker">FOCUS</p>
             <div className="focus-root"><button className="focus-node" style={{ '--category-color': categoryColor(categoryFor(focusTerm)) }} onClick={(event) => openMenu(event, focusTerm)}>{focusTerm.name}</button><span>{categoryFor(focusTerm)}</span></div>
-            {focusChildren.length ? <><div className="focus-stem" /><div className="focus-children">{focusChildren.map((child) => <div className="focus-child" key={child._id}>
+            {focusChildren.length ? <><div className="focus-stem" /><div className="focus-related-heading"><span>RELATED TERMS</span><span>{focusChildren.length}</span></div><div className="focus-children">{focusChildren.map((child) => <div className="focus-child" key={child._id}>
               <button className="focus-node" style={{ '--category-color': categoryColor(categoryFor(child)) }} onClick={(event) => openMenu(event, child)}>{child.name}</button><span>{categoryFor(child)}</span>
             </div>)}</div></> : <p className="focus-empty">No related terms yet.</p>}
           </div>
