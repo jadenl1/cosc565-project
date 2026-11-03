@@ -236,8 +236,8 @@ test('map highlights matching names and aliases and opens a term', async () => {
   await user.click(screen.getByRole('link', { name: 'Explore' }));
   const link = await screen.findByRole('link', { name: term.name });
   await user.type(screen.getByRole('searchbox', { name: 'Search the map' }), 'API');
-  expect(link.classList.contains('is-match')).toBe(true);
-  expect(screen.getByText('1 matching term highlighted')).toBeTruthy();
+  expect(link.classList.contains('is-connected')).toBe(true);
+  expect(screen.getByText(`Showing relationships for ${term.name}`)).toBeTruthy();
   await user.click(link);
   await screen.findByRole('heading', { name: term.name });
 });

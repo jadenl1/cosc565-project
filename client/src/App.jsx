@@ -298,7 +298,7 @@ function categoryFor(term) {
 function TermMap() {
   const [terms, setTerms] = useState([]);
   const [query, setQuery] = useState('');
-  const [active, setActive] = useState(null);
+  const [hovered, setActive] = useState(null);
   const [lines, setLines] = useState([]);
   const mapRef = useRef(null);
   const [status, setStatus] = useState('Loading terms…');
@@ -321,7 +321,10 @@ function TermMap() {
     if (!groups.has(category)) groups.set(category, []);
     groups.get(category).push(term);
   }
-  const count = terms.filter(matches).length;
+  const matchedTerms = terms.filter(matches);
+  const exact = matchedTerms.find((term) => [term.name, ...(term.aliases || [])].some((value) => value.toLowerCase() === needle));
+  const active = hovered || (needle ? (exact || matchedTerms[0])?._id : null);
+  const count = matchedTerms.length;
   const activeTerm = terms.find((term) => term._id === active);
   const connectedIds = new Set((activeTerm?.relatedTerms || []).map(String));
   useEffect(() => {
@@ -364,12 +367,12 @@ function TermMap() {
       <label className="sr-only" htmlFor="map-search">Search the map</label>
       <input id="map-search" type="search" placeholder="Find a term…" value={query} onChange={(event) => setQuery(event.target.value)} />
     </div>
-    {needle && !status && <p className="map-count" role="status">{count ? `${count} matching ${count === 1 ? 'term' : 'terms'} highlighted` : 'No matching terms.'}</p>}
+    {needle && !status && <p className="map-count" role="status">{count ? `Showing relationships for ${(exact || matchedTerms[0]).name}` : 'No matching terms.'}</p>}
     {status ? <div role="status"><p>{status}</p>{status !== 'Loading terms…' && <button className="retry" onClick={() => setAttempt((value) => value + 1)}>Retry</button>}</div> :
-      <div ref={mapRef} className={`term-map${needle ? ' is-searching' : ''}${active ? ' has-active' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true" style={{ color: activeTerm ? categoryColor(categoryFor(activeTerm)) : undefined }}>{lines.map((line) => <line key={line.id} style={{ color: line.color }} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
+      <div ref={mapRef} className={`term-map${active ? ' has-active' : ''}`} onPointerLeave={() => setActive(null)}><svg className="map-connections" aria-hidden="true" style={{ color: activeTerm ? categoryColor(categoryFor(activeTerm)) : undefined }}>{lines.map((line) => <line key={line.id} style={{ color: line.color }} x1={line.from.x} y1={line.from.y} x2={line.to.x} y2={line.to.y} />)}</svg>
         {[...groups].sort(([a], [b]) => a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)).map(([category, entries]) => <section className="map-category" key={category} style={{ '--category-color': categoryColor(category) }} onPointerMove={moveMap} onPointerLeave={resetMapMotion}>
           <h2>{category}<span>{entries.length}</span></h2>
-          <ul>{entries.map((term) => <li key={term._id}><a data-term-id={term._id} className={[matches(term) && 'is-match', active && (term._id === active || connectedIds.has(String(term._id))) && 'is-connected'].filter(Boolean).join(' ')} onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
+          <ul>{entries.map((term) => <li key={term._id}><a data-term-id={term._id} className={[active && (term._id === active || connectedIds.has(String(term._id))) && 'is-connected'].filter(Boolean).join(' ')} onPointerEnter={() => setActive(term._id)} onPointerLeave={() => setActive(null)} onFocus={() => setActive(term._id)} onBlur={() => setActive(null)} href={`#/terms/${encodeURIComponent(term._id)}`}>
             {term.name}<FiArrowUpRight aria-hidden="true" />
           </a></li>)}</ul>
         </section>)}
