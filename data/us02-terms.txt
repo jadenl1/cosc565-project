@@ -1,0 +1,122 @@
+Abstraction||Abstraction|Encapsulation,Class|Hiding implementation details behind a simpler interface so code can focus on what an operation does.
+Algorithm||Algorithm|Data structure,Recursion|A finite sequence of steps for solving a problem or computing a result.
+Argument||Argument|Function,Parameter|A value supplied to a function when it is called.
+Array||Array|Data structure,Object|An ordered collection whose elements can be accessed by their positions.
+Asynchronous||Asynchronous|Callback function,Promise|Describes work that can finish later while the program continues with other tasks.
+Boolean||Boolean|Data type,Conditional|A logical data type with two possible values: true and false.
+Buffer||Buffer|Array,Latency|A temporary memory area that holds data while it is being transferred or processed.
+Call stack||Call_stack|Function,Recursion|The structure a runtime uses to track active function calls and where execution should return.
+Callback function|Callback|Callback_function|Function,Asynchronous|A function passed to other code so that code can invoke it when needed.
+Class||Class|Object,Constructor|A definition describing the state and behavior of a kind of object.
+Closure||Closure|Function,Scope|A function together with access to variables from the environment where it was created.
+Compile|Compilation|Compile|Compiler,Interpreter|To translate source code into another representation, such as machine code or bytecode.
+Compiler||Compile|Compile,Interpreter|A program that translates code from one language or representation into another.
+Conditional||Conditional|Boolean,Control flow|A construct that chooses which code to execute based on a condition.
+Constant||Constant|Variable,Immutable|A named binding whose assigned value cannot be replaced; an object it refers to may still be mutable.
+Constructor||Constructor|Class,Object|An operation used to initialize a newly created object.
+Control flow||Control_flow|Conditional,Function|The order in which a program executes its statements and function calls.
+Data structure||Data_structure|Array,Database|A way of organizing data to support operations such as lookup, insertion, and traversal.
+Data type||https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures|Boolean,String|A classification of values that determines how they are represented and which operations apply.
+Deep copy||Deep_copy|Shallow copy,Object|A copy whose nested data is independent of the original, so changing it does not change the source.
+Dynamic typing||Dynamic_typing|Data type,JavaScript|A language model in which types belong to runtime values and a variable can hold values of different types.
+Encapsulation||Encapsulation|Abstraction,Object|Grouping state with the operations that manage it while controlling access to internal details.
+Exception||Exception|Control flow,Function|A signal that interrupts normal execution when an error or other exceptional condition occurs.
+Function||Function|Argument,Return value|A callable unit of code that performs a task and may return a result.
+Garbage collection|GC|Garbage_collection|Memory management,Object|Automatic reclamation of memory occupied by objects a program can no longer reach or use.
+Immutable|Immutability|Immutable|Mutable,Constant|Describes a value that cannot be changed after it is created.
+Inheritance||Inheritance|Class,Object|A mechanism through which one type or object obtains behavior or properties from another.
+Interpreter||https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Introduction|Compiler,JavaScript|A program that executes another program's instructions, often without a separate ahead-of-time compilation step.
+JavaScript|JS|JavaScript|ECMAScript,Dynamic typing|A programming language used to add behavior to web pages and to build applications in other environments.
+JSON|JavaScript Object Notation|JSON|Serialization,Object|A text format for representing structured data with objects, arrays, strings, numbers, booleans, and null.
+Memory management||https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Memory_management|Garbage collection,Buffer|Allocating memory for program data and releasing it when it is no longer needed.
+Method||Method|Function,Object|A function associated with an object or class.
+Mutable|Mutability|Mutable|Immutable,Object|Describes a value whose contents can change after it is created.
+Null||Null|Undefined,Data type|A value used to explicitly represent the absence of an object or other meaningful value.
+Object||Object|Class,Property|A collection of properties that groups related data and, in many languages, behavior.
+Parameter||Parameter|Argument,Function|A named input declared in a function definition that receives an argument during a call.
+Primitive||Primitive|Data type,Object|A basic value that is not an object, such as a JavaScript string, number, or boolean.
+Promise||Promise|Asynchronous,Callback function|An object representing the eventual success or failure of an asynchronous operation and its resulting value.
+Property||Property/JavaScript|Object,Method|A named member of a JavaScript object that stores a value or provides access through getter and setter functions.
+Recursion||Recursion|Function,Call stack|Solving a problem by having a function call itself on smaller cases until a stopping condition is reached.
+Regular expression|Regex,RegExp|Regular_expression|String,JavaScript|A pattern describing text to match, search, extract, or replace.
+Return value||https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Return_values|Function,Argument|The value a function sends back to its caller after it runs.
+Scope||Scope|Variable,Closure|The part of a program in which a particular binding can be accessed.
+Serialization||Serialization|Deserialization,JSON|Converting data into a representation suitable for storage or transmission.
+Shallow copy||Shallow_copy|Deep copy,Object|A copy that duplicates outer properties while retaining references to nested objects from the original.
+String||String|Data type,Character encoding|A value representing a sequence of text characters or code units.
+Thread||Thread|Asynchronous,Call stack|A sequence of execution within a process that can be scheduled alongside other work.
+Undefined||Undefined|Null,Variable|The JavaScript value commonly used when a variable has not been assigned or a property is missing.
+Variable||Variable|Constant,Scope|A named binding used to refer to a value during program execution.
+ECMAScript|ES|ECMAScript|JavaScript,Dynamic typing|The standardized language specification on which JavaScript is based.
+HTML|Hypertext Markup Language|HTML|Element,DOM|The markup language used to describe the structure and meaning of web content.
+CSS|Cascading Style Sheets|CSS|HTML,Responsive web design|The language used to control the presentation and layout of web documents.
+DOM|Document Object Model|DOM|HTML,JavaScript|A programming interface that represents a document as a tree of objects that scripts can inspect and modify.
+Element||Element|HTML,Attribute|A component of a markup document representing content or structure, typically written using tags.
+Attribute||Attribute|Element,HTML|Additional information attached to a markup element to configure its behavior or describe its properties.
+Accessibility|A11y|Accessibility|ARIA,Semantic HTML|Designing software and content so people with different abilities can perceive, operate, and understand it.
+ARIA|Accessible Rich Internet Applications|ARIA|Accessibility,Semantic HTML|A set of roles and attributes that communicates interface semantics and state to assistive technology.
+Semantic HTML||Semantics|HTML,Accessibility|Using HTML elements according to their meaning so document structure is understandable to browsers and assistive tools.
+Responsive web design|RWD|Responsive_web_design|CSS,Viewport|Designing layouts that adapt to different screen sizes and device capabilities.
+Viewport||Viewport|Responsive web design,CSS|The area in which a browser displays a document, usually the visible portion of its window.
+Progressive enhancement||Progressive_Enhancement|Accessibility,HTML|Providing a functional baseline experience and adding richer features when the browser supports them.
+Single-page application|SPA|SPA|Client-side rendering,JavaScript|A web application that updates much of its interface within one document instead of loading a new page for each navigation.
+Server-side rendering|SSR|SSR|Client-side rendering,HTML|Generating a page's HTML on the server before sending it to the browser.
+Client-side rendering|CSR|CSR|Server-side rendering,JavaScript|Generating or updating a page's interface in the browser using JavaScript.
+Hydration||https://react.dev/reference/react-dom/client/hydrateRoot|Server-side rendering,JavaScript|Connecting client-side application behavior to HTML that was already rendered by the server.
+Web server||Web_server|HTTP,HTML|Software, and the computer running it, that receives web requests and serves responses.
+Browser|Web browser|Browser|HTML,Web server|An application that retrieves web resources and presents interactive pages to users.
+Cookie|HTTP cookie|Cookie|HTTP,Authentication|A small piece of data stored by a browser and sent with matching requests according to its scope and settings.
+Cache||Cache|Latency,CDN|Storage that keeps reusable results or resources to reduce repeated work and speed up access.
+CDN|Content Delivery Network|CDN|Cache,Latency|A distributed network of servers that delivers content from locations nearer to users.
+HTTP|Hypertext Transfer Protocol|HTTP|HTTPS,Web server|An application-layer protocol that defines how clients request resources and servers return responses.
+HTTPS|Hypertext Transfer Protocol Secure|HTTPS|HTTP,TLS|HTTP carried over an encrypted, authenticated TLS connection.
+DNS|Domain Name System|DNS|Domain name,IP address|A distributed naming system that resolves domain names to records such as server IP addresses.
+Domain name||Domain_name|DNS,URL|A human-readable name in the Internet's hierarchical naming system, such as example.com.
+IP address|Internet Protocol address|IP_Address|DNS,TCP|A numerical address used to identify a network interface and route Internet Protocol packets.
+TCP|Transmission Control Protocol|TCP|UDP,HTTP|A transport protocol that delivers an ordered byte stream with retransmission and flow-control mechanisms.
+UDP|User Datagram Protocol|UDP|TCP,Packet|A transport protocol that sends datagrams without guaranteeing delivery, ordering, or duplicate protection.
+TLS|Transport Layer Security|TLS|HTTPS,Encryption|A protocol that protects data in transit through encryption, integrity checks, and authentication.
+URL|Uniform Resource Locator|URL|URI,Domain name|An address that identifies a resource and specifies how it can be accessed.
+URI|Uniform Resource Identifier|URI|URL,HTTP|A character sequence that identifies a resource, including identifiers that locate it or name it.
+Latency||Latency|Bandwidth,Cache|The delay between initiating an operation and observing its response or effect.
+Bandwidth||Bandwidth|Latency,Packet|The data transfer capacity of a communication link, typically measured in bits per second.
+Packet||Packet|TCP,UDP|A unit of data sent across a network together with control information used for delivery.
+REST|Representational State Transfer|REST|HTTP,API|An architectural style for distributed systems built around resources, a uniform interface, and stateless interactions.
+API|Application Programming Interface|API|REST,Function|A defined interface through which software components request functionality or exchange data.
+Idempotent|Idempotency|Idempotent|HTTP,REST|Describes an operation whose intended effect is the same whether it is performed once or repeated.
+WebSocket||WebSockets|HTTP,TCP|A protocol enabling an ongoing two-way message connection between a client and a server.
+CORS|Cross-Origin Resource Sharing|CORS|Same-origin policy,HTTP|An HTTP-header mechanism that lets servers permit browsers to read selected cross-origin responses.
+Same-origin policy|SOP|Same-origin_policy|CORS,Origin|A browser security rule that restricts how a document or script can interact with resources from other origins.
+Origin||Origin|URL,Same-origin policy|For a typical web URL, the combination of scheme, host, and port used by browsers to enforce security boundaries.
+Authentication||Authentication|Authorization,Credential|Verifying the identity of a user, device, or service.
+Authorization||https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication|Authentication,Credential|Determining which resources or actions an identified party is permitted to access.
+Encryption||Encryption|Decryption,Cryptography|Transforming readable data into ciphertext with a cryptographic algorithm and key to protect confidentiality.
+Decryption||Decryption|Encryption,Ciphertext|Recovering readable data from ciphertext using the appropriate cryptographic method and key.
+Cryptography||Cryptography|Encryption,Digital signature|The study and use of mathematical techniques for protecting information and verifying its authenticity.
+Ciphertext||Ciphertext|Encryption,Decryption|The encoded output produced by encrypting plaintext.
+Digital signature||Digital_signature|Cryptography,Public-key cryptography|A cryptographic value that can be checked to verify a message's integrity and its association with a signing key.
+Public-key cryptography|Asymmetric cryptography|Public-key_cryptography|Digital signature,Encryption|Cryptography using a linked public and private key pair, allowing operations such as secure encryption and signature verification.
+Cross-site scripting|XSS|Cross-site_scripting|Content Security Policy,Same-origin policy|A vulnerability that allows attacker-controlled script to run in another site's browser context.
+Cross-site request forgery|CSRF|CSRF|Cookie,Authentication|An attack that causes a user's browser to send an unwanted authenticated request to another site.
+Content Security Policy|CSP|CSP|Cross-site scripting,HTTP|A browser-enforced policy that restricts permitted resource sources and certain behaviors to reduce injection risks.
+SQL injection|SQLi|SQL_Injection|SQL,Database|An attack in which untrusted input changes the intended structure of a database query.
+Hash||Hash|Cryptography,Data structure|A value produced by mapping input data through a hash function; cryptographic hashes add security properties beyond ordinary hashing.
+Credential||Credential|Authentication,Authorization|Information or evidence used to establish identity, such as a password or security key.
+Denial of service|DoS|Denial_of_Service|DDoS,Web server|An attack that makes a service unavailable or unusably slow for legitimate users.
+DDoS|Distributed Denial of Service|Distributed_Denial_of_Service|Denial of service,Web server|A denial-of-service attack carried out from many sources at once.
+Database||Database|SQL,CRUD|An organized collection of data managed so it can be stored, retrieved, and updated.
+SQL|Structured Query Language|SQL|Database,SQL injection|A language used to define, query, and modify data in relational database systems.
+CRUD|Create Read Update Delete|CRUD|Database,REST|The four basic operations for persistent data: creating, reading, updating, and deleting records.
+Deserialization||Deserialization|Serialization,JSON|Reconstructing usable data from a stored or transmitted representation.
+Git||Git|Version control,Repository|A distributed version control system that records changes and supports branching and merging.
+Version control|VCS|https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control|Git,Repository|Tracking changes to files over time so revisions can be compared, restored, and combined.
+Repository|Repo|https://git-scm.com/docs/gitglossary|Git,Version control|A storage location for a project's files and, in version control, their recorded history.
+Continuous integration|CI|Continuous_integration|Git,Version control|Frequently integrating code changes and running automated checks to identify problems early.
+Minification||Minification|JavaScript,CSS|Reducing source-file size by removing unnecessary text and making transformations that preserve behavior.
+Code splitting||Code_splitting|JavaScript,Latency|Dividing application code into smaller bundles that can be loaded when needed.
+Debounce|Debouncing|Debounce|Throttle,Callback function|Delaying a function call until rapid repeated triggers have stopped for a specified interval.
+Throttle|Throttling|Throttle|Debounce,Callback function|Limiting how often an operation can execute during a period of repeated triggers.
+Character encoding||Character_encoding|Unicode,String|A set of rules mapping text characters or code units to bytes for storage or transmission.
+Unicode||Unicode|UTF-8,Character encoding|A standard that assigns code points to characters from many writing systems and defines related text-processing rules.
+UTF-8||UTF-8|Unicode,Character encoding|A Unicode encoding that represents each scalar value with one to four bytes and preserves ASCII byte values.
+Base64||Base64|Serialization,Character encoding|An encoding that represents binary data using a limited set of text characters; it does not provide encryption.

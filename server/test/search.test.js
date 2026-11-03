@@ -96,3 +96,21 @@ test('loads one definition by ID and rejects unknown or invalid IDs', async () =
     assert.equal((await fetch(`${base}/api/terms/${id}`)).status, 404);
   }
 });
+
+test('term details resolve related IDs and filter unsafe references', async () => {
+  const source = await collection.findOne({ searchKey: 'application programming interface' });
+  const related = await collection.findOne({ searchKey: 'artificial intelligence' });
+  await collection.updateOne({ _id: source._id }, { $set: {
+    relatedTerms: [related._id, related._id, source._id, 'bad', '000000000000000000000000'],
+    references: [{ title: 'Documentation', url: 'https://example.com/docs' }, { url: 'javascript:alert(1)' }, null, { url: '/relative' }],
+    origin: 'ai-generated',
+  } });
+  const { term } = await (await fetch(`${base}/api/terms/${String(source._id).toUpperCase()}`)).json();
+  assert.deepEqual(term.relatedTerms, [{ _id: String(related._id), name: related.name }]);
+  assert.deepEqual(term.references, [{ title: 'Documentation', url: 'https://example.com/docs' }]);
+  assert.equal(term.origin, 'ai-generated');
+  assert.equal(term.searchPrefixes, undefined);
+  const legacy = await (await fetch(`${base}/api/terms/${related._id}`)).json();
+  assert.deepEqual(legacy.term.relatedTerms, []);
+  assert.deepEqual(legacy.term.references, []);
+});
