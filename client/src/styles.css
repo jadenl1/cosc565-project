@@ -148,5 +148,8 @@ input:focus-visible { outline: none; }
 .map-category { overflow: visible; background: var(--surface); }
 .map-category a { position: relative; z-index: 2; }
 .map-connections { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
-.map-connections line { stroke: #a8c7fa; stroke-width: 1.5; opacity: .75; stroke-dasharray: 5 4; animation: connection-in 200ms ease-out both; }
+.map-connections line { stroke: #a8c7fa; stroke-width: 1.5; opacity: .75; animation: connection-in 200ms ease-out both; }
 @keyframes connection-in { from { opacity: 0; } to { opacity: .75; } }
+
+.term-map.has-active .map-category a:not(.is-connected) { opacity: .2; }
+.term-map.has-active .map-category a.is-connected { opacity: 1; }
