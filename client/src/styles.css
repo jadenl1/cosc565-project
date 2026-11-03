@@ -244,3 +244,22 @@ main:has(.map-page) .site-header { flex: 0 0 auto; min-height: 64px; padding: 12
 @media (max-width: 600px) { main:has(.map-page) { padding: 0; } main:has(.map-page) .site-header { padding: 10px 16px; } .map-page { margin: 0; } }
 
 .map-node:hover, .map-node:focus-visible { box-shadow: none; }
+
+.focus-view { position: absolute; inset: 0; z-index: 6; overflow: auto; background: #0c1017; animation: focus-enter 260ms ease-out both; }
+.focus-view.is-closing { animation: focus-exit 220ms ease-in both; pointer-events: none; }
+.focus-exit { position: sticky; top: 16px; left: 16px; z-index: 2; display: inline-flex; align-items: center; gap: 7px; margin: 16px; padding: 8px 12px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; }
+.focus-tree { width: max-content; min-width: 100%; display: flex; flex-direction: column; align-items: center; padding: 30px 40px 100px; }
+.focus-root, .focus-child { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
+.focus-root span, .focus-child span { color: var(--muted); font-size: 12px; }
+.focus-node { width: 140px; height: 140px; padding: 16px; border-radius: 50%; border: 1px solid var(--category-color); color: var(--text); background: color-mix(in srgb, var(--category-color) 10%, #0e141e); overflow-wrap: anywhere; }
+.focus-node:hover { background: color-mix(in srgb, var(--category-color) 20%, #0e141e); }
+.focus-stem { height: 65px; width: 1px; background: var(--line); }
+.focus-children { position: relative; display: flex; justify-content: center; gap: 28px; padding-top: 55px; }
+.focus-children::before { content: ''; position: absolute; top: 0; left: 70px; right: 70px; height: 1px; background: var(--line); }
+.focus-child::before { content: ''; position: absolute; width: 1px; height: 55px; bottom: 100%; background: var(--line); }
+.focus-empty { color: var(--muted); font-size: 13px; }
+.node-menu { position: fixed; z-index: 8; display: flex; align-items: center; gap: 4px; padding: 5px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: 0 8px 24px #0008; }
+.node-menu button, .node-menu a { display: inline-flex; align-items: center; padding: 7px 9px; border: 0; border-radius: 4px; background: transparent; color: var(--text); font-size: 12px; }
+.node-menu button:hover, .node-menu a:hover { color: var(--primary); background: var(--hover); }
+@keyframes focus-enter { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: scale(1); } }
+@keyframes focus-exit { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.98); } }

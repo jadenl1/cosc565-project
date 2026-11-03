@@ -239,5 +239,22 @@ test('map highlights matching names and aliases and opens a term', async () => {
   expect(link.classList.contains('is-connected')).toBe(true);
   expect(screen.getByText(`Showing relationships for ${term.name}`)).toBeTruthy();
   await user.click(link);
+  await user.click(screen.getByRole('link', { name: 'Visit' }));
   await screen.findByRole('heading', { name: term.name });
+});
+
+
+test('focus mode opens a related term tree and can focus a child or exit', async () => {
+  const root = { ...term, relatedTerms: [second._id] };
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ terms: [root, { ...second, relatedTerms: [] }] }) })));
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(screen.getByRole('link', { name: 'Explore' }));
+  await user.click(await screen.findByRole('link', { name: term.name }));
+  await user.click(screen.getByRole('button', { name: 'Focus' }));
+  await user.click(screen.getByRole('button', { name: second.name }));
+  await user.click(screen.getByRole('button', { name: 'Focus' }));
+  expect(screen.getByText('No related terms yet.')).toBeTruthy();
+  await user.click(screen.getByRole('button', { name: 'Exit focus' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Exit focus' })).toBeNull());
 });
