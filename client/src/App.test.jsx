@@ -150,7 +150,7 @@ test('related terms navigate to their definition and references open safely', as
   const link = await screen.findByRole('link', { name: /API documentation/ });
   expect(link.getAttribute('target')).toBe('_blank');
   expect(link.getAttribute('rel')).toBe('noopener noreferrer');
-  expect(screen.getByText('AI-generated definition')).toBeTruthy();
+  expect(screen.queryByText('AI-generated definition')).toBeNull();
   await userEvent.click(screen.getByRole('link', { name: second.name }));
   await screen.findByRole('heading', { name: second.name });
   expect(screen.getByText('No related terms yet.')).toBeTruthy();

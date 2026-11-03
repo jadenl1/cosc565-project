@@ -260,7 +260,6 @@ function Definition({ id }) {
         <section className="definition-section" aria-labelledby="definition-heading">
           <h2 id="definition-heading"><FiBookOpen aria-hidden="true" /> Definition</h2>
           <p className="definition">{term.definition || 'No definition available yet.'}</p>
-          {term.origin === 'ai-generated' && <p className="origin-label">AI-generated definition</p>}
         </section>
         <section className="definition-section" aria-labelledby="related-heading">
           <h2 id="related-heading"><FiLink aria-hidden="true" /> Related terms</h2>

@@ -84,7 +84,7 @@ input:focus-visible { outline: none; }
 .bookmark-button:hover, .bookmark-button[aria-pressed='true'] { color: var(--primary); background: var(--surface); }
 .bookmark-button[aria-pressed='true'] svg { fill: currentColor; }
 .bookmark-error { font-size: 12px; max-width: 250px; }
-.origin-label, .empty-detail { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+.empty-detail { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
 .related-terms, .reference-links { list-style: none; padding: 0; margin: 12px 0 0; }
 .related-terms { display: flex; flex-wrap: wrap; gap: 8px; }
 .related-terms a { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; font-size: 12px; }
