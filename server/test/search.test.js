@@ -12,8 +12,20 @@ before(async () => {
   collection = client.db('test').collection('terms');
   await initializeTerms(collection);
   await collection.insertMany([
-    { name: 'Application Programming Interface', aliases: ['API'], definition: 'A software interface.', searchKey: 'application programming interface', searchPrefixes: ['a', 'ap', 'api', 'application programming'] },
-    { name: 'Artificial Intelligence', aliases: ['AI'], definition: 'Learning and reasoning.', searchKey: 'artificial intelligence', searchPrefixes: ['a', 'ai', 'artificial'] },
+    {
+      name: 'Application Programming Interface',
+      aliases: ['API'],
+      definition: 'A software interface.',
+      searchKey: 'application programming interface',
+      searchPrefixes: ['a', 'ap', 'api', 'application programming'],
+    },
+    {
+      name: 'Artificial Intelligence',
+      aliases: ['AI'],
+      definition: 'Learning and reasoning.',
+      searchKey: 'artificial intelligence',
+      searchPrefixes: ['a', 'ai', 'artificial'],
+    },
   ]);
   server = createApp(createTermRepository(collection)).listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
@@ -27,7 +39,7 @@ after(async () => {
 
 async function search(query, suffix = '') {
   const response = await fetch(`${base}/api/terms?q=${encodeURIComponent(query)}${suffix}`);
-  return { status: response.status, ...await response.json() };
+  return { status: response.status, ...(await response.json()) };
 }
 
 test('matches names and aliases regardless of case and surrounding whitespace', async () => {
@@ -41,7 +53,10 @@ test('matches names and aliases regardless of case and surrounding whitespace', 
 
 test('autocomplete returns matching prefixes and no duplicate terms', async () => {
   const result = await search('a', '&suggest=true');
-  assert.deepEqual(result.terms.map((term) => term.name), ['Application Programming Interface', 'Artificial Intelligence']);
+  assert.deepEqual(
+    result.terms.map((term) => term.name),
+    ['Application Programming Interface', 'Artificial Intelligence'],
+  );
 });
 
 test('treats regex characters as literal input', async () => {
@@ -53,18 +68,29 @@ test('returns an empty result for unknown terms', async () => {
 });
 
 test('rejects blank, oversized, control-character and non-string queries', async () => {
-  for (const query of ['', '   ', 'a'.repeat(121), 'api\n']) assert.equal((await search(query)).status, 400);
+  for (const query of ['', '   ', 'a'.repeat(121), 'api\n'])
+    assert.equal((await search(query)).status, 400);
   for (const query of ['', '?q=a&q=b', '?q[$ne]=']) {
     assert.equal((await fetch(`${base}/api/terms${query}`)).status, 400);
   }
 });
 
 test('enforces unique normalized names', async () => {
-  await assert.rejects(collection.insertOne({ searchKey: 'application programming interface' }), { code: 11000 });
+  await assert.rejects(collection.insertOne({ searchKey: 'application programming interface' }), {
+    code: 11000,
+  });
 });
 
 test('limits suggestions and results and signals additional matches', async () => {
-  await collection.insertMany(Array.from({ length: 55 }, (_, i) => ({ name: `Test ${i}`, aliases: [], definition: 'Test entry', searchKey: `test ${i}`, searchPrefixes: ['test'] })));
+  await collection.insertMany(
+    Array.from({ length: 55 }, (_, i) => ({
+      name: `Test ${i}`,
+      aliases: [],
+      definition: 'Test entry',
+      searchKey: `test ${i}`,
+      searchPrefixes: ['test'],
+    })),
+  );
   const suggestions = await search('test', '&suggest=true');
   assert.equal(suggestions.terms.length, 8);
   assert.equal(suggestions.hasMore, true);
@@ -74,12 +100,20 @@ test('limits suggestions and results and signals additional matches', async () =
 });
 
 test('returns a retryable service error without exposing internal details', async () => {
-  const failingServer = createApp({ search() { throw new Error('private details'); } }).listen(0, '127.0.0.1');
+  const failingServer = createApp({
+    search() {
+      throw new Error('private details');
+    },
+  }).listen(0, '127.0.0.1');
   await new Promise((resolve) => failingServer.once('listening', resolve));
   try {
-    const response = await fetch(`http://127.0.0.1:${failingServer.address().port}/api/terms?q=api`);
+    const response = await fetch(
+      `http://127.0.0.1:${failingServer.address().port}/api/terms?q=api`,
+    );
     assert.equal(response.status, 503);
-    assert.deepEqual(await response.json(), { error: 'Search is temporarily unavailable. Please try again.' });
+    assert.deepEqual(await response.json(), {
+      error: 'Search is temporarily unavailable. Please try again.',
+    });
   } finally {
     await new Promise((resolve) => failingServer.close(resolve));
   }
@@ -100,12 +134,24 @@ test('loads one definition by ID and rejects unknown or invalid IDs', async () =
 test('term details resolve related IDs and filter unsafe references', async () => {
   const source = await collection.findOne({ searchKey: 'application programming interface' });
   const related = await collection.findOne({ searchKey: 'artificial intelligence' });
-  await collection.updateOne({ _id: source._id }, { $set: {
-    relatedTerms: [related._id, related._id, source._id, 'bad', '000000000000000000000000'],
-    references: [{ title: 'Documentation', url: 'https://example.com/docs' }, { url: 'javascript:alert(1)' }, null, { url: '/relative' }],
-    origin: 'ai-generated',
-  } });
-  const { term } = await (await fetch(`${base}/api/terms/${String(source._id).toUpperCase()}`)).json();
+  await collection.updateOne(
+    { _id: source._id },
+    {
+      $set: {
+        relatedTerms: [related._id, related._id, source._id, 'bad', '000000000000000000000000'],
+        references: [
+          { title: 'Documentation', url: 'https://example.com/docs' },
+          { url: 'javascript:alert(1)' },
+          null,
+          { url: '/relative' },
+        ],
+        origin: 'ai-generated',
+      },
+    },
+  );
+  const { term } = await (
+    await fetch(`${base}/api/terms/${String(source._id).toUpperCase()}`)
+  ).json();
   assert.deepEqual(term.relatedTerms, [{ _id: String(related._id), name: related.name }]);
   assert.deepEqual(term.references, [{ title: 'Documentation', url: 'https://example.com/docs' }]);
   assert.equal(term.origin, 'ai-generated');

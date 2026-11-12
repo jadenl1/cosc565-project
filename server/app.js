@@ -6,7 +6,12 @@ export function createApp(repository) {
 
   app.get('/api/terms', async (req, res) => {
     const { q, suggest } = req.query;
-    if (typeof q !== 'string' || !q.trim() || q.trim().length > 120 || /[\u0000-\u001f\u007f]/u.test(q)) {
+    if (
+      typeof q !== 'string' ||
+      !q.trim() ||
+      q.trim().length > 120 ||
+      /[\u0000-\u001f\u007f]/u.test(q)
+    ) {
       return res.status(400).json({ error: 'Enter a search term between 1 and 120 characters.' });
     }
     try {
@@ -16,11 +21,6 @@ export function createApp(repository) {
     } catch {
       res.status(503).json({ error: 'Search is temporarily unavailable. Please try again.' });
     }
-  });
-
-  app.get('/api/term-map', async (_req, res) => {
-    try { res.json({ terms: await repository.listForMap() }); }
-    catch { res.status(503).json({ error: 'The term map is temporarily unavailable.' }); }
   });
 
   app.get('/api/terms/:id', async (req, res) => {

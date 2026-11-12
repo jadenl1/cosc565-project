@@ -13,7 +13,9 @@
     "start": "node --env-file-if-exists=.env server/index.js",
     "test": "npm run test:server && npm run test:client",
     "test:server": "node --test server/test/*.test.js",
-    "test:client": "vitest run"
+    "test:client": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "express": "^5.1.0",
@@ -28,6 +30,7 @@
     "concurrently": "^9.2.1",
     "jsdom": "^29.1.1",
     "mongodb-memory-server": "^10.2.1",
+    "prettier": "^3.10.1",
     "vite": "^7.1.7",
     "vitest": "^5.0.4"
   }

@@ -11,8 +11,10 @@ app.use(express.static(fileURLToPath(new URL('../dist', import.meta.url))));
 const server = app.listen(process.env.PORT || 3001, () => console.log('Techtionary API is ready.'));
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
-  process.once(signal, () => server.close(async () => {
-    await client.close();
-    process.exit(0);
-  }));
+  process.once(signal, () =>
+    server.close(async () => {
+      await client.close();
+      process.exit(0);
+    }),
+  );
 }
