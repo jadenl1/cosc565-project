@@ -5,7 +5,7 @@ export function createApp(repository) {
   app.disable('x-powered-by');
 
   app.get('/api/terms', async (req, res) => {
-    const { q, suggest } = req.query;
+    const { q, suggest, page: pageInput } = req.query;
     if (
       typeof q !== 'string' ||
       !q.trim() ||
@@ -14,10 +14,20 @@ export function createApp(repository) {
     ) {
       return res.status(400).json({ error: 'Enter a search term between 1 and 120 characters.' });
     }
+    const page = pageInput === undefined ? 1 : Number(pageInput);
+    if (
+      typeof pageInput === 'object' ||
+      !Number.isSafeInteger(page) ||
+      page < 1 ||
+      page > 10000 ||
+      (pageInput !== undefined && !/^[1-9]\d*$/.test(pageInput))
+    ) {
+      return res.status(400).json({ error: 'Enter a valid page number.' });
+    }
     try {
-      const limit = suggest === 'true' ? 8 : 50;
-      const terms = await repository.search(q.trim(), limit + 1);
-      res.json({ terms: terms.slice(0, limit), hasMore: terms.length > limit });
+      const limit = suggest === 'true' ? 10 : 50;
+      const terms = await repository.search(q.trim(), limit + 1, (page - 1) * limit);
+      res.json({ terms: terms.slice(0, limit), hasMore: terms.length > limit, page });
     } catch {
       res.status(503).json({ error: 'Search is temporarily unavailable. Please try again.' });
     }

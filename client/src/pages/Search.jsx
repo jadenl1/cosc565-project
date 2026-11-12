@@ -1,10 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FiArrowUpRight, FiCornerDownLeft, FiSearch } from 'react-icons/fi';
+import {
+  FiArrowLeft,
+  FiArrowRight,
+  FiArrowUpRight,
+  FiCornerDownLeft,
+  FiSearch,
+} from 'react-icons/fi';
 
-async function searchTerms(query, signal) {
-  const response = await fetch(`/api/terms?${new URLSearchParams({ q: query, suggest: true })}`, {
-    signal,
-  });
+async function searchTerms(query, signal, page = 1) {
+  const response = await fetch(
+    `/api/terms?${new URLSearchParams({ q: query, suggest: true, page })}`,
+    {
+      signal,
+    },
+  );
   if (!response.ok) throw new Error('Search is temporarily unavailable. Please try again.');
   return response.json();
 }
@@ -13,6 +22,10 @@ export default function Search({ onChoose }) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [active, setActive] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const cache = useRef(new Map());
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [leaving, setLeaving] = useState(false);
@@ -22,25 +35,44 @@ export default function Search({ onChoose }) {
 
   useEffect(() => {
     if (!query.trim() || !open || leaving) return;
+    const key = `${query.trim().toLowerCase()}:${page}`;
+    const saved = cache.current.get(key);
+    if (saved) {
+      setSuggestions(saved.terms);
+      setHasMore(saved.hasMore);
+      setMessage(saved.terms.length ? '' : 'No matching terms.');
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     const version = revision.current;
-    const timer = setTimeout(async () => {
-      setMessage('Searching…');
-      try {
-        const data = await searchTerms(query.trim(), controller.signal);
-        if (!controller.signal.aborted && version === revision.current) {
-          setSuggestions(data.terms);
-          setMessage(data.terms.length ? '' : 'No matching terms.');
+    setLoading(true);
+    const timer = setTimeout(
+      async () => {
+        setMessage('Searching…');
+        try {
+          const data = await searchTerms(query.trim(), controller.signal, page);
+          if (!controller.signal.aborted && version === revision.current) {
+            cache.current.set(key, data);
+            setSuggestions(data.terms);
+            setHasMore(Boolean(data.hasMore));
+            setMessage(data.terms.length ? '' : 'No matching terms.');
+            setLoading(false);
+          }
+        } catch (error) {
+          if (!controller.signal.aborted && version === revision.current) {
+            setMessage(error.message);
+            setLoading(false);
+          }
         }
-      } catch (error) {
-        if (!controller.signal.aborted && version === revision.current) setMessage(error.message);
-      }
-    }, 250);
+      },
+      page === 1 ? 250 : 0,
+    );
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, open, leaving]);
+  }, [query, open, leaving, page]);
 
   useEffect(() => () => request.current?.abort(), []);
 
@@ -56,6 +88,9 @@ export default function Search({ onChoose }) {
     revision.current++;
     request.current?.abort();
     setQuery(value);
+    setPage(1);
+    setHasMore(false);
+    setLoading(false);
     setSuggestions([]);
     setActive(0);
     setMessage('');
@@ -72,7 +107,7 @@ export default function Search({ onChoose }) {
     setOpen(true);
     setMessage('Searching…');
     try {
-      const data = await searchTerms(query.trim(), controller.signal);
+      const data = await searchTerms(query.trim(), controller.signal, page);
       if (controller.signal.aborted || version !== revision.current) return;
       if (data.terms.length) choose(data.terms[0]);
       else setMessage('No matching terms.');
@@ -111,7 +146,12 @@ export default function Search({ onChoose }) {
         <label className="sr-only" htmlFor="search">
           Search terms and aliases
         </label>
-        <div className="search-box">
+        <div
+          className="search-box"
+          onBlur={(event) => {
+            if (!leaving && !event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+          }}
+        >
           <FiSearch className="search-icon" aria-hidden="true" />
           <input
             ref={input}
@@ -126,16 +166,13 @@ export default function Search({ onChoose }) {
             placeholder="Search a term…"
             value={query}
             onFocus={() => setOpen(true)}
-            onBlur={() => {
-              if (!leaving) setOpen(false);
-            }}
             onKeyDown={onKeyDown}
             onChange={(event) => changeQuery(event.target.value)}
           />
           <button className="icon-button" type="submit" aria-label="Open first or selected match">
             <FiCornerDownLeft aria-hidden="true" />
           </button>
-          {open && (suggestions.length > 0 || message) && (
+          {open && (suggestions.length > 0 || message || loading || page > 1) && (
             <div className="suggestion-panel">
               {expanded && (
                 <ul id="suggestions" role="listbox" aria-label="Matching terms">
@@ -157,6 +194,37 @@ export default function Search({ onChoose }) {
                     </li>
                   ))}
                 </ul>
+              )}
+              {(page > 1 || hasMore) && (
+                <div className="suggestion-pagination" aria-label="Search result pages">
+                  <button
+                    type="button"
+                    aria-label="Previous page"
+                    disabled={page === 1 || loading}
+                    onClick={() => {
+                      input.current?.focus();
+                      setActive(0);
+                      setSuggestions([]);
+                      setPage((value) => value - 1);
+                    }}
+                  >
+                    <FiArrowLeft aria-hidden="true" />
+                  </button>
+                  <span aria-label={`Page ${page}`}>{page}</span>
+                  <button
+                    type="button"
+                    aria-label="Next page"
+                    disabled={!hasMore || loading}
+                    onClick={() => {
+                      input.current?.focus();
+                      setActive(0);
+                      setSuggestions([]);
+                      setPage((value) => value + 1);
+                    }}
+                  >
+                    <FiArrowRight aria-hidden="true" />
+                  </button>
+                </div>
               )}
               {message && <p role="status">{message}</p>}
             </div>

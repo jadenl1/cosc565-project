@@ -36,8 +36,7 @@ Suggestions appear after 250 ms. Enter opens the first match; arrow keys select
 another match. Clicking a suggestion opens its definition page. Definition URLs
 use `/#/terms/<id>` and work on refresh.
 
-`GET /api/terms?q=api` returns up to 50 matches. Add `suggest=true` for up to eight
-suggestions. `GET /api/terms/:id` returns a single definition. `hasMore` indicates additional matches. Queries must contain 1–120
+`GET /api/terms?q=api` returns up to 50 matches. Add `suggest=true` for up to ten suggestions per page. Use `page=2` for the next page. `GET /api/terms/:id` returns a single definition. `hasMore` indicates additional matches. Queries must contain 1–120
 characters. MongoDB stores indexed search prefixes for names and aliases.
 
 ## Check and build

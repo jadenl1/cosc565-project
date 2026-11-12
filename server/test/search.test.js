@@ -92,8 +92,23 @@ test('limits suggestions and results and signals additional matches', async () =
     })),
   );
   const suggestions = await search('test', '&suggest=true');
-  assert.equal(suggestions.terms.length, 8);
+  assert.equal(suggestions.terms.length, 10);
   assert.equal(suggestions.hasMore, true);
+  const secondPage = await search('test', '&suggest=true&page=2');
+  assert.equal(secondPage.terms.length, 10);
+  assert.equal(secondPage.page, 2);
+  assert.equal(secondPage.hasMore, true);
+  assert.equal(
+    secondPage.terms.some((term) => suggestions.terms.some((first) => first._id === term._id)),
+    false,
+  );
+  const lastPage = await search('test', '&suggest=true&page=6');
+  assert.equal(lastPage.terms.length, 5);
+  assert.equal(lastPage.hasMore, false);
+  for (const page of ['0', '-1', '1.5', '1e2', '10001', 'abc']) {
+    assert.equal((await search('test', `&suggest=true&page=${page}`)).status, 400);
+  }
+
   const results = await search('test');
   assert.equal(results.terms.length, 50);
   assert.equal(results.hasMore, true);
