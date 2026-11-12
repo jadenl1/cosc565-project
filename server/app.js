@@ -18,6 +18,11 @@ export function createApp(repository) {
     }
   });
 
+  app.get('/api/term-map', async (_req, res) => {
+    try { res.json({ terms: await repository.listForMap() }); }
+    catch { res.status(503).json({ error: 'The term map is temporarily unavailable.' }); }
+  });
+
   app.get('/api/terms/:id', async (req, res) => {
     try {
       const term = await repository.findById(req.params.id);

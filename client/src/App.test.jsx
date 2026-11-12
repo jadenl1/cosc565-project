@@ -9,6 +9,7 @@ const term = { _id: 'api', name: 'Application Programming Interface', aliases: [
 const second = { _id: 'ai', name: 'Artificial Intelligence', aliases: ['AI'], definition: 'Learning and reasoning.' };
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.unstubAllGlobals();
   window.history.replaceState(null, '', '/');
 });
@@ -138,4 +139,122 @@ test('waits for the exit animation before opening a definition', async () => {
     if (original) HTMLElement.prototype.animate = original;
     else delete HTMLElement.prototype.animate;
   }
+});
+
+test('related terms navigate to their definition and references open safely', async () => {
+  window.history.replaceState(null, '', '/#/terms/api');
+  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: true, json: async () => ({ term: url.endsWith('/ai') ? second : {
+    ...term, relatedTerms: [second], references: [{ title: 'API documentation', url: 'https://developer.mozilla.org/en-US/docs/Glossary/API' }], origin: 'ai-generated',
+  } }) })));
+  render(<App />);
+  const link = await screen.findByRole('link', { name: /API documentation/ });
+  expect(link.getAttribute('target')).toBe('_blank');
+  expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  expect(screen.queryByText('AI-generated definition')).toBeNull();
+  await userEvent.click(screen.getByRole('link', { name: second.name }));
+  await screen.findByRole('heading', { name: second.name });
+  expect(screen.getByText('No related terms yet.')).toBeTruthy();
+  expect(screen.getByText('No references available yet.')).toBeTruthy();
+});
+
+test('bookmarks survive remount and can be removed without removing other bookmarks', async () => {
+  localStorage.setItem('techtionary.bookmarks', JSON.stringify(['ai']));
+  window.history.replaceState(null, '', '/#/terms/api');
+  mockSearch();
+  const view = render(<App />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Bookmark term' }));
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['ai', 'api']);
+  view.unmount();
+  render(<App />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Remove bookmark' }));
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['ai']);
+});
+
+test('corrupt bookmark data can be replaced by a new save', async () => {
+  localStorage.setItem('techtionary.bookmarks', '{broken');
+  window.history.replaceState(null, '', '/#/terms/api');
+  mockSearch();
+  render(<App />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Bookmark term' }));
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['api']);
+});
+
+test('storage failure does not claim a bookmark was saved', async () => {
+  window.history.replaceState(null, '', '/#/terms/api');
+  mockSearch();
+  const setter = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Quota exceeded'); });
+  try {
+    render(<App />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Bookmark term' }));
+    expect(screen.getByRole('button', { name: 'Bookmark term' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByText('Could not save bookmark. Browser storage is unavailable.')).toBeTruthy();
+  } finally { setter.mockRestore(); }
+});
+
+test('bookmarks navigation lists saved terms, opens them, and removes saved entries', async () => {
+  localStorage.setItem('techtionary.bookmarks', JSON.stringify(['api', 'ai']));
+  mockSearch();
+  render(<App />);
+  await userEvent.click(screen.getByRole('link', { name: 'Bookmarks', exact: true }));
+  await screen.findByRole('link', { name: term.name });
+  expect(screen.getByRole('link', { name: second.name })).toBeTruthy();
+  await userEvent.click(screen.getByRole('link', { name: term.name }));
+  await screen.findByRole('heading', { name: term.name });
+  await userEvent.click(await screen.findByRole('button', { name: 'Remove bookmark' }));
+  await userEvent.click(screen.getByRole('link', { name: 'Bookmarks', exact: true }));
+  await screen.findByRole('link', { name: second.name });
+  expect(screen.queryByRole('link', { name: term.name })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: `Remove bookmark ${second.name}` }));
+  await screen.findByText('No bookmarks yet. Save a term to find it here.');
+});
+
+test('bookmarks retain unavailable entries and allow retrying a failed load', async () => {
+  localStorage.setItem('techtionary.bookmarks', JSON.stringify(['api', 'missing']));
+  window.history.replaceState(null, '', '/#/bookmarks');
+  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: false, status: url.endsWith('/missing') ? 404 : 503 })));
+  render(<App />);
+  await screen.findByText('Could not load this term');
+  expect(screen.getByText('Term no longer available')).toBeTruthy();
+  expect(JSON.parse(localStorage.getItem('techtionary.bookmarks'))).toEqual(['api', 'missing']);
+  mockSearch();
+  await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+  await screen.findAllByRole('link', { name: term.name });
+});
+
+test('bookmarks page reports malformed storage without crashing', async () => {
+  localStorage.setItem('techtionary.bookmarks', '{invalid');
+  window.history.replaceState(null, '', '/#/bookmarks');
+  render(<App />);
+  await screen.findByText('Bookmarks could not be read from this browser.');
+});
+
+
+test('map highlights matching names and aliases and opens a term', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: true, json: async () => url === '/api/term-map' ? { terms: [term, second] } : { term } })));
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(screen.getByRole('link', { name: 'Explore' }));
+  const link = await screen.findByRole('link', { name: term.name });
+  await user.type(screen.getByRole('searchbox', { name: 'Search the map' }), 'API');
+  expect(link.classList.contains('is-connected')).toBe(true);
+  expect(screen.getByText(`Showing relationships for ${term.name}`)).toBeTruthy();
+  await user.click(link);
+  await user.click(screen.getByRole('link', { name: 'Visit' }));
+  await screen.findByRole('heading', { name: term.name });
+});
+
+
+test('focus mode opens a related term tree and can focus a child or exit', async () => {
+  const root = { ...term, relatedTerms: [second._id] };
+  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ terms: [root, { ...second, relatedTerms: [] }] }) })));
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(screen.getByRole('link', { name: 'Explore' }));
+  await user.click(await screen.findByRole('link', { name: term.name }));
+  await user.click(screen.getByRole('button', { name: 'Focus' }));
+  await user.click(screen.getByRole('link', { name: second.name }));
+  await user.click(screen.getByRole('button', { name: 'Focus' }));
+  expect(document.querySelector('.term-map.is-focused')).toBeTruthy();
+  await user.click(screen.getByRole('navigation', { name: 'Main navigation' }));
+  await waitFor(() => expect(document.querySelector('.term-map.is-focused')).toBeNull());
 });
