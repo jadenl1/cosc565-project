@@ -291,3 +291,36 @@ test('bookmarks page reports malformed storage without crashing', async () => {
   render(<App />);
   await screen.findByText('Bookmarks could not be read from this browser.');
 });
+
+test('autocomplete pages results and reuses a previously loaded page', async () => {
+  const first = Array.from({ length: 10 }, (_, index) => ({
+    ...term,
+    _id: `first-${index}`,
+    name: `Match ${index}`,
+  }));
+  const last = [{ ...second, name: 'Match last' }];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url) => {
+      const page = new URL(url, 'http://localhost').searchParams.get('page');
+      return {
+        ok: true,
+        json: async () => ({ terms: page === '2' ? last : first, hasMore: page !== '2' }),
+      };
+    }),
+  );
+  const user = userEvent.setup();
+  render(<App />);
+  await user.type(screen.getByRole('combobox'), 'match');
+  await screen.findByRole('option', { name: /Match 0/ });
+  expect(screen.getAllByRole('option')).toHaveLength(10);
+  await user.click(screen.getByRole('button', { name: 'Next page' }));
+  await screen.findByRole('option', { name: /Match last/ });
+  expect(screen.getByLabelText('Page 2').textContent).toBe('2');
+  expect(document.activeElement).toBe(screen.getByRole('combobox'));
+  expect(screen.getByRole('combobox').getAttribute('aria-expanded')).toBe('true');
+  expect(screen.getByRole('button', { name: 'Next page' }).disabled).toBe(true);
+  await user.click(screen.getByRole('button', { name: 'Previous page' }));
+  await screen.findByRole('option', { name: /Match 0/ });
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
