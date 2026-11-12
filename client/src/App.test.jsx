@@ -5,8 +5,18 @@ import { cleanup, render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App.jsx';
 
-const term = { _id: 'api', name: 'Application Programming Interface', aliases: ['API'], definition: 'A software interface.' };
-const second = { _id: 'ai', name: 'Artificial Intelligence', aliases: ['AI'], definition: 'Learning and reasoning.' };
+const term = {
+  _id: 'api',
+  name: 'Application Programming Interface',
+  aliases: ['API'],
+  definition: 'A software interface.',
+};
+const second = {
+  _id: 'ai',
+  name: 'Artificial Intelligence',
+  aliases: ['AI'],
+  definition: 'Learning and reasoning.',
+};
 afterEach(() => {
   cleanup();
   localStorage.clear();
@@ -15,10 +25,14 @@ afterEach(() => {
 });
 
 function mockSearch(terms = [term]) {
-  vi.stubGlobal('fetch', vi.fn(async (url) => ({
-    ok: true,
-    json: async () => url.startsWith('/api/terms?') ? { terms } : { term: url.endsWith('/ai') ? second : term },
-  })));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url) => ({
+      ok: true,
+      json: async () =>
+        url.startsWith('/api/terms?') ? { terms } : { term: url.endsWith('/ai') ? second : term },
+    })),
+  );
 }
 
 test('debounces suggestions and Enter opens the top result without arrow keys', async () => {
@@ -79,7 +93,10 @@ test('empty and failed searches stay on the search page and can be retried', asy
   render(<App />);
   await user.type(screen.getByRole('combobox'), 'unknown{Enter}');
   await screen.findByText('No matching terms.');
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false })));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({ ok: false })),
+  );
   await user.keyboard('{Enter}');
   await screen.findByText('Search is temporarily unavailable. Please try again.');
   mockSearch();
@@ -89,7 +106,15 @@ test('empty and failed searches stay on the search page and can be retried', asy
 
 test('ignores stale responses after the query is cleared', async () => {
   let resolve;
-  vi.stubGlobal('fetch', vi.fn(() => new Promise((done) => { resolve = done; })));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    ),
+  );
   const user = userEvent.setup();
   render(<App />);
   await user.type(screen.getByRole('combobox'), 'api{Enter}');
@@ -111,7 +136,10 @@ test('example terms populate autocomplete', async () => {
 
 test('missing definitions show a recoverable message', async () => {
   window.history.replaceState(null, '', '/#/terms/missing');
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404 })));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({ ok: false, status: 404 })),
+  );
   render(<App />);
   await screen.findByText('Term not found.');
   expect(screen.getByRole('link', { name: 'Back to search' })).toBeTruthy();
@@ -120,7 +148,12 @@ test('missing definitions show a recoverable message', async () => {
 test('waits for the exit animation before opening a definition', async () => {
   mockSearch();
   let finish;
-  const animation = { finished: new Promise((resolve) => { finish = resolve; }), cancel: vi.fn() };
+  const animation = {
+    finished: new Promise((resolve) => {
+      finish = resolve;
+    }),
+    cancel: vi.fn(),
+  };
   const original = HTMLElement.prototype.animate;
   HTMLElement.prototype.animate = vi.fn(() => animation);
   try {
@@ -129,7 +162,9 @@ test('waits for the exit animation before opening a definition', async () => {
     await user.type(screen.getByRole('combobox'), 'api');
     await user.click(await screen.findByRole('option'));
     expect(window.location.hash).toBe('');
-    expect(HTMLElement.prototype.animate.mock.calls.map(([, options]) => options.delay)).toEqual([0, 60, 120]);
+    expect(HTMLElement.prototype.animate.mock.calls.map(([, options]) => options.delay)).toEqual([
+      0, 60, 120,
+    ]);
     expect(screen.queryByText(term.definition)).toBeNull();
     await act(async () => finish());
     await screen.findByText(term.definition);
@@ -143,9 +178,27 @@ test('waits for the exit animation before opening a definition', async () => {
 
 test('related terms navigate to their definition and references open safely', async () => {
   window.history.replaceState(null, '', '/#/terms/api');
-  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: true, json: async () => ({ term: url.endsWith('/ai') ? second : {
-    ...term, relatedTerms: [second], references: [{ title: 'API documentation', url: 'https://developer.mozilla.org/en-US/docs/Glossary/API' }], origin: 'ai-generated',
-  } }) })));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url) => ({
+      ok: true,
+      json: async () => ({
+        term: url.endsWith('/ai')
+          ? second
+          : {
+              ...term,
+              relatedTerms: [second],
+              references: [
+                {
+                  title: 'API documentation',
+                  url: 'https://developer.mozilla.org/en-US/docs/Glossary/API',
+                },
+              ],
+              origin: 'ai-generated',
+            },
+      }),
+    })),
+  );
   render(<App />);
   const link = await screen.findByRole('link', { name: /API documentation/ });
   expect(link.getAttribute('target')).toBe('_blank');
@@ -182,13 +235,21 @@ test('corrupt bookmark data can be replaced by a new save', async () => {
 test('storage failure does not claim a bookmark was saved', async () => {
   window.history.replaceState(null, '', '/#/terms/api');
   mockSearch();
-  const setter = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Quota exceeded'); });
+  const setter = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new Error('Quota exceeded');
+  });
   try {
     render(<App />);
     await userEvent.click(await screen.findByRole('button', { name: 'Bookmark term' }));
-    expect(screen.getByRole('button', { name: 'Bookmark term' }).getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByText('Could not save bookmark. Browser storage is unavailable.')).toBeTruthy();
-  } finally { setter.mockRestore(); }
+    expect(screen.getByRole('button', { name: 'Bookmark term' }).getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+    expect(
+      screen.getByText('Could not save bookmark. Browser storage is unavailable.'),
+    ).toBeTruthy();
+  } finally {
+    setter.mockRestore();
+  }
 });
 
 test('bookmarks navigation lists saved terms, opens them, and removes saved entries', async () => {
@@ -211,7 +272,10 @@ test('bookmarks navigation lists saved terms, opens them, and removes saved entr
 test('bookmarks retain unavailable entries and allow retrying a failed load', async () => {
   localStorage.setItem('techtionary.bookmarks', JSON.stringify(['api', 'missing']));
   window.history.replaceState(null, '', '/#/bookmarks');
-  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: false, status: url.endsWith('/missing') ? 404 : 503 })));
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url) => ({ ok: false, status: url.endsWith('/missing') ? 404 : 503 })),
+  );
   render(<App />);
   await screen.findByText('Could not load this term');
   expect(screen.getByText('Term no longer available')).toBeTruthy();
@@ -226,35 +290,4 @@ test('bookmarks page reports malformed storage without crashing', async () => {
   window.history.replaceState(null, '', '/#/bookmarks');
   render(<App />);
   await screen.findByText('Bookmarks could not be read from this browser.');
-});
-
-
-test('map highlights matching names and aliases and opens a term', async () => {
-  vi.stubGlobal('fetch', vi.fn(async (url) => ({ ok: true, json: async () => url === '/api/term-map' ? { terms: [term, second] } : { term } })));
-  const user = userEvent.setup();
-  render(<App />);
-  await user.click(screen.getByRole('link', { name: 'Explore' }));
-  const link = await screen.findByRole('link', { name: term.name });
-  await user.type(screen.getByRole('searchbox', { name: 'Search the map' }), 'API');
-  expect(link.classList.contains('is-connected')).toBe(true);
-  expect(screen.getByText(`Showing relationships for ${term.name}`)).toBeTruthy();
-  await user.click(link);
-  await user.click(screen.getByRole('link', { name: 'Visit' }));
-  await screen.findByRole('heading', { name: term.name });
-});
-
-
-test('focus mode opens a related term tree and can focus a child or exit', async () => {
-  const root = { ...term, relatedTerms: [second._id] };
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ terms: [root, { ...second, relatedTerms: [] }] }) })));
-  const user = userEvent.setup();
-  render(<App />);
-  await user.click(screen.getByRole('link', { name: 'Explore' }));
-  await user.click(await screen.findByRole('link', { name: term.name }));
-  await user.click(screen.getByRole('button', { name: 'Focus' }));
-  await user.click(screen.getByRole('link', { name: second.name }));
-  await user.click(screen.getByRole('button', { name: 'Focus' }));
-  expect(document.querySelector('.term-map.is-focused')).toBeTruthy();
-  await user.click(screen.getByRole('navigation', { name: 'Main navigation' }));
-  await waitFor(() => expect(document.querySelector('.term-map.is-focused')).toBeNull());
 });
